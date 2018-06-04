@@ -108,15 +108,19 @@ public class ProxyFilter implements Filter {
         //check for images and urls.
 
         if (response.isHtml()) {
-            response.setData(URLReplacementUtil.replace(
-                    response.getData(),
-                    response.getContentEncoding(), //TODO this must be dynamic
-                    base,
-                    meSubFolder
-            ));
+            String data = new String(response.getData(), response.getContentEncoding());
+            data = data.replaceAll(base, meSubFolder);
+            data = data.replaceAll("<a href=\"", "<a href=\"/faq");
+//            response.setData(URLReplacementUtil.replace(
+//                    response.getData(),
+//                    response.getContentEncoding(), //TODO this must be dynamic
+//                    base,
+//                    meSubFolder
+//            ));
             //ahrefs must be replaced
             //<a href="/category/kosten-preise-2018/">Kosten &amp; Preise 2018</a>
 
+            response.setData(data.getBytes());
         }
 
 
