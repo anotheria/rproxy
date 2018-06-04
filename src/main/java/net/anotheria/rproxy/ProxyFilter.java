@@ -1,5 +1,9 @@
 package net.anotheria.rproxy;
 
+import net.anotheria.rproxy.getter.HttpGetter;
+import net.anotheria.rproxy.getter.HttpProxyRequest;
+import net.anotheria.rproxy.getter.HttpProxyResponse;
+import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import org.apache.http.HttpEntity;
 
 import javax.servlet.Filter;
@@ -12,6 +16,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Map;
 
 public class ProxyFilter implements Filter {
@@ -51,42 +56,33 @@ public class ProxyFilter implements Filter {
 
 		System.out.println("Filter: "+pathToGet);
 		//get page with new url
-		String page = PageContent.getPageContent(base+pathToGet);
-		//first path simply replace the url.
-		net.anotheria.util.StringUtils.replace(page, base, me);
 
-		//System.out.println(page);
-		servletResponse.getWriter().print(page);
-//            if (urlMustBeReplaced(url)) {
-//                //get page with new url
-//                String page = PageContent.getPageContent("https://www.google.com");
-//                //System.out.println(page);
-//                servletResponse.getWriter().print(page);
-//            }
-//            if (urlRelative(url)) {
-//                HttpClient cl = HttpClientBuilder.create().build();
-//                HttpGet re = new HttpGet(url);
-//
-//                HttpResponse response = cl.execute(re);
-//                HttpEntity entity = response.getEntity();
-//            }
-		//PageContent.proxy(url);
-		//filterChain.doFilter(servletRequest, servletResponse);
+		HttpProxyRequest proxyRequest = new HttpProxyRequest(base+pathToGet);
+		Enumeration<String> headerNames = req.getHeaderNames();
+		String hName;
+		while (headerNames.hasMoreElements()){
+			hName = headerNames.nextElement();
+			proxyRequest.addHeader(hName, req.getHeader(hName));
+		}
 
-    }
+		HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
 
-    private boolean urlRelative(String url) {
-        if (!url.equals("http://localhost:8080/")) {
-            System.out.println("Relative!");
-            return true;
-        }
-        return false;
+		//check for images and urls.
+		if (response.isHtml()){
+			response.setData(URLReplacementUtil.replace(
+					response.getData(),
+					"UTF-8", //TODO this must be dynamic
+					base,
+					me
+			));
+		}
+
+
+		//handle return type, only write out on wrong return type.
+		res.setContentType(response.getContentType());
+		res.getOutputStream().write(response.getData());
+		res.getOutputStream().flush();
 
     }
-
-    private boolean urlMustBeReplaced(String url) {
-        return true;
-    }
-
 
 }
