@@ -1,6 +1,5 @@
-package net.anotheria.filter;
+package net.anotheria.rproxy;
 
-import net.anotheria.rproxy.PageContent;
 import org.apache.http.HttpEntity;
 
 import javax.servlet.Filter;
@@ -15,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
-public class MyFilter implements Filter {
+public class ProxyFilter implements Filter {
 
     private static Map<String, HttpEntity> s = null;
 
