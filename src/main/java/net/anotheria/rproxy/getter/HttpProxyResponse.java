@@ -11,6 +11,7 @@ public class HttpProxyResponse {
 	private int statusCode;
 	private String statusMessage;
 	private String contentType;
+	private String contentEncoding;
 
 	public byte[] getData() {
 		return data;
@@ -38,6 +39,20 @@ public class HttpProxyResponse {
 
 	public void setContentType(String contentType) {
 		this.contentType = contentType;
+		String[] cType = contentType.split(";" );
+		boolean set = false;
+		for(String p : cType){
+			if(p.startsWith(" charset=") || p.startsWith("charset=")){
+				p = p.trim();
+				p = p.replace("charset=", "");
+				this.contentEncoding = p;
+				set = true;
+			}
+		}
+		if(!set){
+			//set default encoding utf-8
+			this.contentEncoding = "UTF-8";
+		}
 	}
 
 	public String getContentType() {
@@ -48,4 +63,9 @@ public class HttpProxyResponse {
 		//this is temporarly solution.
 		return contentType != null && contentType.contains("text/html");
 	}
+
+	public String getContentEncoding() {
+		return contentEncoding;
+	}
+
 }

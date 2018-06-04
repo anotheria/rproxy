@@ -75,11 +75,12 @@ public class ProxyFilter implements Filter {
 
         HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
 
+
         //check for images and urls.
         if (response.isHtml()){
             response.setData(URLReplacementUtil.replace(
                     response.getData(),
-                    "UTF-8", //TODO this must be dynamic
+                    response.getContentEncoding(), //TODO this must be dynamic
                     base,
                     me
             ));
