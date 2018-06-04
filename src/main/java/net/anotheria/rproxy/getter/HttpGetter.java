@@ -69,9 +69,11 @@ public class HttpGetter {
 		ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
 		final HttpEntity entity = response.getEntity();
 		ret.setContentType(entity.getContentType().getValue());
-		System.out.println("Content-Type: "+entity.getContentType());
-		System.out.println("Encoding: "+entity.getContentEncoding());
-		//ret.setContentEncoding(entity.getContentEncoding().getName());
+		//System.out.println("Content-Type: "+entity.getContentType());
+		//System.out.println("Encoding: "+entity.getContentEncoding());
+
+
+        //ret.setContentEncoding(entity.getContentEncoding().getName());
 		if (entity != null) {
 			try {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();

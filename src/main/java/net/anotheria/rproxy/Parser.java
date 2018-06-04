@@ -5,6 +5,20 @@ import java.net.URL;
 
 public class Parser {
 
+    public static void main(String... args){
+        String hostBase = "sub.hello.com";
+        String hostBase1 = "hello.com";
+        String hostMe = "localhost:8080";
+        String[] parts = hostBase.split("\\.");
+        if (parts.length > 2) {
+            hostMe += "/" + parts[0];
+        }
+
+        System.out.println(hostBase);
+        System.out.println(hostMe);
+    }
+
+
     public static final String DOT = ".";
     public static final String SLASH = "/";
 

@@ -15,22 +15,40 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ProxyFilter implements Filter {
-
-    private String base;
-    private String me;
 
     private String hostBase;
     private String hostMe;
 
+    private String base;
+    private String me;
+    private String meSubFolder;
+    private String subFolder;
+
     private static final String HTTP = "http://";
+
     public void init(FilterConfig filterConfig) {
         this.hostBase = filterConfig.getInitParameter("baseHost");
         this.hostMe = filterConfig.getInitParameter("myHost");
-        me = HTTP + hostMe;
+        String sub = getSubFolder(hostMe);
+        subFolder = sub;
+        me = HTTP + hostMe ;
+        meSubFolder = me + sub;
         base = HTTP + hostBase;
+        hostMe += sub;
+    }
+
+    private String getSubFolder(String hostMe) {
+        String[] parts = hostBase.split("\\.");
+        if (parts.length > 2) {
+            return "/" + parts[0];
+        }
+        return "";
     }
 
     public void destroy() {
@@ -39,34 +57,45 @@ public class ProxyFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
 
-        if (!(servletRequest instanceof HttpServletRequest)){
+        if (!(servletRequest instanceof HttpServletRequest)) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
 
-        HttpServletRequest req = (HttpServletRequest)servletRequest;
+        HttpServletRequest req = (HttpServletRequest) servletRequest;
         HttpServletResponse res = (HttpServletResponse) servletResponse;
 
-
         String path = req.getRequestURI();
+        String subFolder = this.subFolder;
+        if (!subFolder.equals("")) {
+            path = path.replaceAll(subFolder, "");
+        }
         String queryString = req.getQueryString();
         String pathToGet = path;
-        if (queryString!=null && queryString.length()>0)
+        if (queryString != null && queryString.length() > 0)
             pathToGet += "?" + queryString;
 
-        System.out.println("Filter: "+pathToGet);
+        System.out.println("Filter: " + pathToGet);
 
-        HttpProxyRequest proxyRequest = new HttpProxyRequest(base+pathToGet);
+        HttpProxyRequest proxyRequest = new HttpProxyRequest(base + pathToGet);
         Enumeration<String> headerNames = req.getHeaderNames();
-        while (headerNames.hasMoreElements()){
+        while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
             String hValue = req.getHeader(hName);
 
-            if (hName.equals("referer")){
-                hValue = StringUtils.replace(hValue, me, base );
+            //System.out.println(hValue);
+            if (hName.equals("referer")) {
+                System.out.println("Before replace ref " + hValue);
+                hValue = StringUtils.replace(hValue, me, base);
+                System.out.println("After replace ref " + hValue);
             }
-            if (hName.equals("host")){
+            if (hName.equals("host")) {
+                System.out.println("Before replace host " + hValue);
                 hValue = StringUtils.replace(hValue, hostMe, hostBase);
+                if(true){
+                    hValue = hostBase;
+                }
+                System.out.println("Before replace host " + hValue);
             }
 
 
@@ -77,13 +106,17 @@ public class ProxyFilter implements Filter {
 
 
         //check for images and urls.
-        if (response.isHtml()){
+
+        if (response.isHtml()) {
             response.setData(URLReplacementUtil.replace(
                     response.getData(),
                     response.getContentEncoding(), //TODO this must be dynamic
                     base,
-                    me
+                    meSubFolder
             ));
+            //ahrefs must be replaced
+            //<a href="/category/kosten-preise-2018/">Kosten &amp; Preise 2018</a>
+
         }
 
 
