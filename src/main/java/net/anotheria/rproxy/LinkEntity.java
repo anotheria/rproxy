@@ -37,15 +37,6 @@ public class LinkEntity {
         }
     }
 
-    /**
-     * Dummy always sets domain to "youtube.com"
-     *
-     * @param link
-     */
-    private void parseLink(String link) {
-
-    }
-
     public String getProtocol() {
         return protocol;
     }

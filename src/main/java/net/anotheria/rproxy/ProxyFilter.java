@@ -19,15 +19,18 @@ import java.util.Enumeration;
 
 public class ProxyFilter implements Filter {
 
-      //TOBE Configured
-    String base = "http://faq.thecasuallounge.ch";
-    String me = "http://localhost:8080";
+    private String base;
+    private String me;
 
-    //should be configured
-    String HOST_BASE = "faq.thecasuallounge.ch";
-    String HOST_ME   = "localhost:8080";
+    private String hostBase;
+    private String hostMe;
 
-    public void init(FilterConfig filterConfig) throws ServletException {
+    private static final String HTTP = "http://";
+    public void init(FilterConfig filterConfig) {
+        this.hostBase = filterConfig.getInitParameter("baseHost");
+        this.hostMe = filterConfig.getInitParameter("myHost");
+        me = HTTP + hostMe;
+        base = HTTP + hostBase;
     }
 
     public void destroy() {
@@ -36,58 +39,57 @@ public class ProxyFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
 
-		if (!(servletRequest instanceof HttpServletRequest)){
-			filterChain.doFilter(servletRequest, servletResponse);
-			return;
-		}
+        if (!(servletRequest instanceof HttpServletRequest)){
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
 
         HttpServletRequest req = (HttpServletRequest)servletRequest;
-		HttpServletResponse res = (HttpServletResponse) servletResponse;
+        HttpServletResponse res = (HttpServletResponse) servletResponse;
 
 
-		String path = req.getRequestURI();
-		String queryString = req.getQueryString();
-		String pathToGet = path;
-		if (queryString!=null && queryString.length()>0)
-			pathToGet += "?" + queryString;
+        String path = req.getRequestURI();
+        String queryString = req.getQueryString();
+        String pathToGet = path;
+        if (queryString!=null && queryString.length()>0)
+            pathToGet += "?" + queryString;
 
-		System.out.println("Filter: "+pathToGet);
-		//get page with new url
+        System.out.println("Filter: "+pathToGet);
 
-		HttpProxyRequest proxyRequest = new HttpProxyRequest(base+pathToGet);
-		Enumeration<String> headerNames = req.getHeaderNames();
-		while (headerNames.hasMoreElements()){
-			String hName = headerNames.nextElement();
-			String hValue = req.getHeader(hName);
+        HttpProxyRequest proxyRequest = new HttpProxyRequest(base+pathToGet);
+        Enumeration<String> headerNames = req.getHeaderNames();
+        while (headerNames.hasMoreElements()){
+            String hName = headerNames.nextElement();
+            String hValue = req.getHeader(hName);
 
-			if (hName.equals("referer")){
-				hValue = StringUtils.replace(hValue, me, base );
-			}
-			if (hName.equals("host")){
-				hValue = StringUtils.replace(hValue, HOST_ME, HOST_BASE);
-			}
-
-
-			proxyRequest.addHeader(hName, hValue);
-		}
-
-		HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
-
-		//check for images and urls.
-		if (response.isHtml()){
-			response.setData(URLReplacementUtil.replace(
-					response.getData(),
-					"UTF-8", //TODO this must be dynamic
-					base,
-					me
-			));
-		}
+            if (hName.equals("referer")){
+                hValue = StringUtils.replace(hValue, me, base );
+            }
+            if (hName.equals("host")){
+                hValue = StringUtils.replace(hValue, hostMe, hostBase);
+            }
 
 
-		//handle return type, only write out on wrong return type.
-		res.setContentType(response.getContentType());
-		res.getOutputStream().write(response.getData());
-		res.getOutputStream().flush();
+            proxyRequest.addHeader(hName, hValue);
+        }
+
+        HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
+
+        //check for images and urls.
+        if (response.isHtml()){
+            response.setData(URLReplacementUtil.replace(
+                    response.getData(),
+                    "UTF-8", //TODO this must be dynamic
+                    base,
+                    me
+            ));
+        }
+
+
+        //handle return type, only write out on wrong return type.
+        res.setContentType(response.getContentType());
+        res.getOutputStream().write(response.getData());
+        res.getOutputStream().flush();
 
     }
 
