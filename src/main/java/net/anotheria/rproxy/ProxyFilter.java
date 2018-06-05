@@ -6,19 +6,11 @@ import net.anotheria.rproxy.getter.HttpProxyResponse;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Enumeration;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ProxyFilter implements Filter {
 
@@ -33,17 +25,16 @@ public class ProxyFilter implements Filter {
     private static final String HTTP = "http://";
 
     public void init(FilterConfig filterConfig) {
-        this.hostBase = filterConfig.getInitParameter("baseHost");
-        this.hostMe = filterConfig.getInitParameter("myHost");
-        String sub = getSubFolder(hostMe);
-        subFolder = sub;
+        hostBase = filterConfig.getInitParameter("baseHost");
+        hostMe = filterConfig.getInitParameter("myHost");
+        subFolder = getSubFolder(hostBase);
         me = HTTP + hostMe ;
-        meSubFolder = me + sub;
+        meSubFolder = me + subFolder;
         base = HTTP + hostBase;
-        hostMe += sub;
+        hostMe += subFolder;
     }
 
-    private String getSubFolder(String hostMe) {
+    private String getSubFolder(String hostBase) {
         String[] parts = hostBase.split("\\.");
         if (parts.length > 2) {
             return "/" + parts[0];
@@ -85,17 +76,17 @@ public class ProxyFilter implements Filter {
 
             //System.out.println(hValue);
             if (hName.equals("referer")) {
-                System.out.println("Before replace ref " + hValue);
-                hValue = StringUtils.replace(hValue, me, base);
-                System.out.println("After replace ref " + hValue);
+                //System.out.println("Before replace ref " + hValue);
+                hValue = StringUtils.replace(hValue, meSubFolder, base);
+                //System.out.println("After replace ref " + hValue);
             }
             if (hName.equals("host")) {
-                System.out.println("Before replace host " + hValue);
-                hValue = StringUtils.replace(hValue, hostMe, hostBase);
+                //System.out.println("Before replace host " + hValue);
+                //hValue = StringUtils.replace(hValue, hostMe, hostBase);
                 if(true){
                     hValue = hostBase;
                 }
-                System.out.println("Before replace host " + hValue);
+                //System.out.println("After replace host " + hValue);
             }
 
 
@@ -110,15 +101,14 @@ public class ProxyFilter implements Filter {
         if (response.isHtml()) {
             String data = new String(response.getData(), response.getContentEncoding());
             data = data.replaceAll(base, meSubFolder);
-            data = data.replaceAll("<a href=\"", "<a href=\"/faq");
-//            response.setData(URLReplacementUtil.replace(
-//                    response.getData(),
-//                    response.getContentEncoding(), //TODO this must be dynamic
-//                    base,
-//                    meSubFolder
-//            ));
-            //ahrefs must be replaced
-            //<a href="/category/kosten-preise-2018/">Kosten &amp; Preise 2018</a>
+            //relative hrefs replacing
+            data = data.replaceAll("<a href=\"/", "<a href=\"" + subFolder + "/");
+            response.setData(URLReplacementUtil.replace(
+                    response.getData(),
+                    response.getContentEncoding(), //TODO this must be dynamic
+                    base,
+                    meSubFolder
+            ));
 
             response.setData(data.getBytes());
         }
