@@ -5,6 +5,15 @@ import java.net.URL;
 
 public class Parser {
 
+    public static void main(String... args) throws MalformedURLException {
+        LinkEntity l = new LinkEntity("https://www.cms.casual.com");
+        URL test = new URL("https://www.cms.casual.com");
+        System.out.println(test.getProtocol());
+        System.out.println(test.getHost());
+        System.out.println(test.getAuthority());
+        System.out.println(test.getRef());
+    }
+
 
     public static final String DOT = ".";
     public static final String SLASH = "/";

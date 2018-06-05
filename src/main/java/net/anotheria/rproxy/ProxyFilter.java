@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Enumeration;
 
 @Monitor
@@ -22,22 +24,32 @@ public class ProxyFilter implements Filter {
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFilter.class);
 
     private String hostBase;
-    private String hostMe;
-
-    private String base;
-    private String me;
+    private String baseLink;
     private String meSubFolder;
     private String subFolder;
 
-    private static final String HTTP = "http://";
 
     public void init(FilterConfig filterConfig) {
-        hostBase = filterConfig.getInitParameter("baseHost");
-        hostMe = filterConfig.getInitParameter("myHost");
+
+        URL base = null;
+        URL host = null;
+        try {
+            base = new URL(filterConfig.getInitParameter("BaseURL"));
+            host = new URL(filterConfig.getInitParameter("HostURL"));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        hostBase = base.getHost();
+        String hostMe = host.getHost();
+
+        String baseProtocol = base.getProtocol() + "://";
+        String hostProtocol = host.getProtocol() + "://";
+
         subFolder = getSubFolder(hostBase);
-        me = HTTP + hostMe;
+
+        String me = hostProtocol + hostMe;
         meSubFolder = me + subFolder;
-        base = HTTP + hostBase;
+        baseLink = baseProtocol + hostBase;
         hostMe += subFolder;
     }
 
@@ -76,14 +88,14 @@ public class ProxyFilter implements Filter {
             //System.out.println("Filter: " + pathToGet);
 
             //LOG.info(pathToGet);
-            HttpProxyRequest proxyRequest = new HttpProxyRequest(base + pathToGet);
+            HttpProxyRequest proxyRequest = new HttpProxyRequest(baseLink + pathToGet);
             Enumeration<String> headerNames = req.getHeaderNames();
             while (headerNames.hasMoreElements()) {
                 String hName = headerNames.nextElement();
                 String hValue = req.getHeader(hName);
 
                 if (hName.equals("referer")) {
-                    hValue = StringUtils.replace(hValue, meSubFolder, base);
+                    hValue = StringUtils.replace(hValue, meSubFolder, baseLink);
                 }
                 if (hName.equals("host")) {
                     hValue = hostBase;
@@ -100,13 +112,13 @@ public class ProxyFilter implements Filter {
 
             if (response.isHtml()) {
                 String data = new String(response.getData(), response.getContentEncoding());
-                data = data.replaceAll(base, meSubFolder);
+                data = data.replaceAll(baseLink, meSubFolder);
                 //relative hrefs replacing
                 data = data.replaceAll("<a href=\"/", "<a href=\"" + subFolder + "/");
                 response.setData(URLReplacementUtil.replace(
                         response.getData(),
                         response.getContentEncoding(), //TODO this must be dynamic
-                        base,
+                        baseLink,
                         meSubFolder
                 ));
 

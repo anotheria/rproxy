@@ -1,22 +1,8 @@
 package net.anotheria.rproxy;
 
 import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.Map;
 
-/**
- * Representation of the common link.
- * <p>
- * For example, www.youtube.com/watch?v=shdsGHhskK
- * </p>
- * <p>www - subdomain.</p> +
- * <p>youtube.com - domain.</p> +
- * <p>subdomain + domain = host.</p> +
- * <p>com - top-level domain.</p> +
- * <p>watch - the path.</p> +
- * <p>v - parameter.</p>
- * <p>shdsGHhskK - parameter value.</p>
- */
+
 public class LinkEntity {
 
     private String protocol;
