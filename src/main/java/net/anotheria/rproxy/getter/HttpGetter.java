@@ -1,5 +1,6 @@
 package net.anotheria.rproxy.getter;
 
+import net.anotheria.rproxy.ProxyFilter;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -13,6 +14,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,6 +28,7 @@ import java.io.IOException;
  */
 public class HttpGetter {
 
+    private static final Logger LOG = LoggerFactory.getLogger(HttpGetter.class);
 	/**
 	 * HttpClient instance.
 	 */
@@ -48,7 +52,8 @@ public class HttpGetter {
 
 
 	public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException{
-		System.out.println("Trying to get "+req);
+		//System.out.println("Trying to get "+req);
+		LOG.info(req.getUrl());
 		HttpClient client = HttpClientBuilder.create().build();
 		HttpGet request = new HttpGet(req.getUrl());
 
@@ -69,11 +74,7 @@ public class HttpGetter {
 		ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
 		final HttpEntity entity = response.getEntity();
 		ret.setContentType(entity.getContentType().getValue());
-		//System.out.println("Content-Type: "+entity.getContentType());
-		//System.out.println("Encoding: "+entity.getContentEncoding());
 
-
-        //ret.setContentEncoding(entity.getContentEncoding().getName());
 		if (entity != null) {
 			try {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
