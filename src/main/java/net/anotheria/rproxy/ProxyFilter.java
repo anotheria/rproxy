@@ -108,6 +108,7 @@ public class ProxyFilter implements Filter {
             HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
 
 
+
             //check for images and urls.
 
             if (response.isHtml()) {
@@ -115,6 +116,13 @@ public class ProxyFilter implements Filter {
                 data = data.replaceAll(baseLink, meSubFolder);
                 //relative hrefs replacing
                 data = data.replaceAll("<a href=\"/", "<a href=\"" + subFolder + "/");
+                response.setData(URLReplacementUtil.replace(
+                        response.getData(),
+                        response.getContentEncoding(), //TODO this must be dynamic
+                        baseLink,
+                        meSubFolder
+                ));
+                data = data.replaceAll("src=\"/", "src=\"" + subFolder + "/");
                 response.setData(URLReplacementUtil.replace(
                         response.getData(),
                         response.getContentEncoding(), //TODO this must be dynamic
