@@ -1,5 +1,8 @@
 package net.anotheria.rproxy;
 
+/**
+ * Class represents rule for concrete top domains. Used in Rule as a sub rule.
+ */
 public class RuleTopDomain {
     private String topDomain;
     private ProxyHelper proxyHelper;

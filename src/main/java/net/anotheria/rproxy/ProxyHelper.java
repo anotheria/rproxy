@@ -1,5 +1,8 @@
 package net.anotheria.rproxy;
 
+/**
+ * Class represents data for requests.
+ */
 public class ProxyHelper {
 
     private String hostBase;

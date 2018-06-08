@@ -3,10 +3,13 @@ package net.anotheria.rproxy;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Class represents general rules configured via web.xml
+ */
 public class Rule {
     private String subDomain;
     private ProxyHelper proxyHelperDefault;
-    List<RuleTopDomain> topDomainList;
+    private List<RuleTopDomain> topDomainList;
 
     public Rule() {
         topDomainList = new LinkedList<>();
@@ -36,7 +39,7 @@ public class Rule {
         this.topDomainList = topDomainList;
     }
 
-    public void addTopDomainRule(RuleTopDomain r){
+    public void addTopDomainRule(RuleTopDomain r) {
         this.topDomainList.add(r);
     }
 
