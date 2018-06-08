@@ -23,7 +23,7 @@ public class ProxyFilter implements Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFilter.class);
 
-    private List<Rule> rules;
+    private List<Rule> defaultRules;
     private List<ProxyHelper> helpers;
 
     public void init(FilterConfig filterConfig) {
@@ -41,6 +41,7 @@ public class ProxyFilter implements Filter {
             e.printStackTrace();
         }
 
+        //prepared links from BaseUrl param
         List<ProxyHelper> allProxyHelper = new LinkedList<>();
 
         for (String baseUrl : baseUrls) {
@@ -58,13 +59,40 @@ public class ProxyFilter implements Filter {
 
         }
 
-        String ruleParam = filterConfig.getInitParameter("RuleURL");
-        if(ruleParam != null){
-            this.rules = parseRules(ruleParam.split(","), allProxyHelper);
+        //fill rules for default behaviour for sub domains
+        String defRule = filterConfig.getInitParameter("SubDomainRule");
+        if (defRule != null) {
+            this.defaultRules = parseSubDomainRules(defRule.split(","), allProxyHelper);
+        }
+
+        //now add rules to sub domains for top domains
+        String topDomainRulesString = filterConfig.getInitParameter("TopDomainRule");
+        if (topDomainRulesString != null) {
+            parseTopDomainRules(topDomainRulesString.split(","), allProxyHelper);
         }
         this.helpers = new LinkedList<>(allProxyHelper);
     }
 
+    private List<Rule> parseSubDomainRules(String[] rulesArr, List<ProxyHelper> allProxyHelper) {
+        if (rulesArr.length % 2 != 0) {
+            return null;
+        }
+
+        List<Rule> rules = new LinkedList<>();
+        for (int i = 0; i < rulesArr.length; i += 2) {
+            Rule rule = new Rule();
+            rule.setSubDomain(rulesArr[i]);
+            int index = Integer.parseInt(rulesArr[i + 1]) - 1;
+            if (index > allProxyHelper.size() - 1) {
+                rules = null;
+                break;
+            }
+            rule.setProxyHelperDefault(allProxyHelper.get(index));
+            rules.add(rule);
+        }
+
+        return rules;
+    }
 
 
     public void destroy() {
@@ -84,37 +112,47 @@ public class ProxyFilter implements Filter {
             String path = req.getRequestURI();
             String appUrl = req.getRequestURL().toString();
 
-            //URL u = new URL(path);
-            //System.out.println("app url --------------->" + req.getRequestURL());
-            //System.out.println(u.toString());
-
-            //top domain
-
             URL u = new URL(appUrl);
 
-            //System.out.println("top domain->>>>>>>>>>>" + getTopDomain(u.getHost()));
+            String topPath = getTopPath(appUrl);
+            String topDomain = getTopDomain(u.getHost());
+
+            System.out.println(topDomain + " -> top domain here");
 
             HttpProxyResponse response = null;
-            if (rules != null && u.getHost() != null && getTopDomain(u.getHost()) != null) {
-                //search for top domain in list for redirect
-                // if present use proxyEntity, otherwise use default
-                for (Rule r : rules) {
-                    if (getTopDomain(u.getHost()).equals(r.getTopDomain())) {
-                        response = getResponse(path, req, r.getProxyHelper());
-                        break;
+
+            if (defaultRules != null) {
+                //if top path is present
+                System.out.println("defRules != null");
+                for (Rule defRule : defaultRules) {
+                    System.out.println(defRule.getSubDomain() + " <???> " + topPath);
+                    //search rule where subdom equals to current request top path
+                    if (defRule.getSubDomain().equals(topPath)) {
+                        System.out.println("defRules found by topPath!");
+                        //found rule! now check if it has top domain subrules
+                        if (!defRule.getTopDomainList().isEmpty()) {
+                            System.out.println("subRules != null");
+                            //it has subrules, search for current url topdomain rule
+                            for (RuleTopDomain topDomRule : defRule.getTopDomainList()) {
+                                //if found - do request for current rule, otherwise do without subrule
+                                if (topDomRule.getTopDomain().equals(topDomain)) {
+                                    response = getResponse(path, req, topDomRule.getProxyHelper());
+                                    break;
+                                }
+                                response = getResponse(path, req, defRule.getProxyHelperDefault());
+                            }
+                        } else {
+                            System.out.println("subRules == null");
+                            System.out.println(defRule.getProxyHelperDefault().toString());
+                            response = getResponse(path, req, defRule.getProxyHelperDefault());
+                            break;
+                        }
                     }
-//                    if(getTopDomain(u.getHost()).equals("localhost")){
-//                        response = getResponse(path, req, r.getProxyHelper());
-//                        break;
-//                    }
-                    //System.out.println("First and def element is " + helpers.get(0));
-                    //System.out.println("path " + path + " req " + req.getRequestURL());
-                    response = getResponse(path, req, helpers.get(0));
                 }
+
             } else {
                 response = getResponse(path, req, helpers.get(0));
             }
-
 
             //handle return type, only write out on wrong return type.
             res.setContentType(response.getContentType());
@@ -132,17 +170,32 @@ public class ProxyFilter implements Filter {
 
     }
 
+//    private Rule ruleForTopDomain(String topDomain) {
+//        if (rules == null) {
+//            return null;
+//        }
+//        for (Rule rule : rules) {
+//            if (getTopDomain(u.getHost()).equals(r.getTopDomain())) {
+//                response = getResponse(path, req, r.getProxyHelper());
+//                break;
+//            }
+//
+//            response = getResponse(path, req, helpers.get(0));
+//        }
+//    }
+
     /**
      * Do request to the resource and gets response.
+     *
      * @param path - Servlet request URI
-     * @param req - Http Servlet Request
-     * @param p - ProxyHelper instance
+     * @param req  - Http Servlet Request
+     * @param p    - ProxyHelper instance
      * @return HttpProxyResponse instance
      * @throws IOException
      */
     private HttpProxyResponse getResponse(String path, HttpServletRequest req, ProxyHelper p) throws IOException {
 
-        System.out.println(p.toString());
+        //System.out.println(p.toString());
 
         String subFolder = p.getSubFolder();
         if (!subFolder.equals("")) {
@@ -215,38 +268,36 @@ public class ProxyFilter implements Filter {
     }
 
     /**
-     *
-     * @param ruleURLS String[] of topDomains and numbers of link from BaseURL parameter.
+     * @param ruleString     String[] of topDomains and numbers of link from BaseURL parameter.
      * @param allProxyHelper list of ProxyHelper objects
-     * @return list of Rule objects
      */
-    private List<Rule> parseRules(String[] ruleURLS, List<ProxyHelper> allProxyHelper) {
-        if (ruleURLS.length % 2 != 0) {
-            return null;
+    private void parseTopDomainRules(String[] ruleString, List<ProxyHelper> allProxyHelper) {
+        if (ruleString.length % 3 != 0) {
+            return;
         }
 
-        List<Rule> rules = new LinkedList<>();
-        for (int i = 0; i < ruleURLS.length; i += 2) {
-            Rule rule = new Rule();
-            rule.setTopDomain(ruleURLS[i]);
-
-            int index = Integer.parseInt(ruleURLS[i + 1]) - 1;
-            if(index > allProxyHelper.size()-1){
-                rules = null;
-                break;
-            }
-            rule.setProxyHelper(allProxyHelper.get(index));
-            rules.add(rule);
+        for (int i = 0; i < ruleString.length; i += 3) {
+            RuleTopDomain rule = new RuleTopDomain();
+            rule.setTopDomain(ruleString[i + 1]);
+            rule.setProxyHelper(allProxyHelper.get(Integer.parseInt(ruleString[i + 2]) - 1));
+            this.defaultRules.get(Integer.parseInt(ruleString[i]) - 1).addTopDomainRule(rule);
+            //take helper by index and find his def rule then add top domain rule
+//            ProxyHelper ph = this.helpers.get(Integer.parseInt(ruleString[i]) - 1);
+//            for (Rule r : this.defaultRules) {
+//                if (r.getProxyHelperDefault().equals(ph)) {
+//                    r.addTopDomainRule(rule);
+//                    System.out.println("Found!!!");
+//                    break;
+//                }
+//            }
         }
 
-        return rules;
     }
 
     /**
-     *
-     * @param hostMe current host
+     * @param hostMe       current host
      * @param hostProtocol current host protocol
-     * @param base URL of resource
+     * @param base         URL of resource
      * @return ProxyHelper instance
      */
     private ProxyHelper getProxyInstance(String hostMe, String hostProtocol, URL base) {
@@ -265,6 +316,38 @@ public class ProxyFilter implements Filter {
         p.setMeSubFolder(meSubFolder);
         p.setBaseLink(baseLink);
         return p;
+    }
+
+    /**
+     * Search for top part of url path. Example: http://website.com/path/to/something?p=1 path will be returned.
+     *
+     * @param url string representation of url
+     * @return first part of the url`s path
+     */
+    private String getTopPath(String url) {
+        //System.out.println(url);
+        if (url == null) {
+            return null;
+        }
+
+        try {
+            URL u = new URL(url);
+            String path = u.getPath();
+            String[] pathParts = path.split("/");
+            String res = null;
+            // System.out.println(Arrays.toString(pathParts));
+            for (String part : pathParts) {
+                if (part != null && !part.equals("")) {
+                    //   System.out.println(part);
+                    res = part;
+                    break;
+                }
+            }
+            return res;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }
