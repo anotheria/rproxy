@@ -1,9 +1,13 @@
 package net.anotheria.rproxy;
 
 import net.anotheria.moskito.aop.annotation.Monitor;
+import net.anotheria.rproxy.conf.ContentReplace;
+import net.anotheria.rproxy.conf.ContentReplaceRelative;
+import net.anotheria.rproxy.conf.XMLParser;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
+import net.anotheria.rproxy.replacement.ContentReplacement;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
 import org.slf4j.Logger;
@@ -20,6 +24,8 @@ import java.util.*;
 
 @Monitor
 public class ProxyFilter implements Filter {
+
+    private static List<ContentReplace> configRules = getConfigRules();
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFilter.class);
 
@@ -221,7 +227,7 @@ public class ProxyFilter implements Filter {
             data = data.replaceAll("href=\"/", "href=\"" + subFolder + "/");
             response.setData(URLReplacementUtil.replace(
                     response.getData(),
-                    response.getContentEncoding(), //TODO this must be dynamic
+                    response.getContentEncoding(),
                     p.getBaseLink(),
                     p.getMeSubFolder()
             ));
@@ -229,15 +235,32 @@ public class ProxyFilter implements Filter {
             data = data.replaceAll("src=\"/", "src=\"" + subFolder + "/");
             response.setData(URLReplacementUtil.replace(
                     response.getData(),
-                    response.getContentEncoding(), //TODO this must be dynamic
+                    response.getContentEncoding(),
                     p.getBaseLink(),
                     p.getMeSubFolder()
             ));
+
+            data = data.replaceAll("localhost/", "localhost:8080/");
+            response.setData(URLReplacementUtil.replace(
+                    response.getData(),
+                    response.getContentEncoding(),
+                    p.getBaseLink(),
+                    p.getMeSubFolder()
+            ));
+
+           data = getReplacementWithConfig(data);
 
             response.setData(data.getBytes());
         }
 
         return response;
+    }
+
+    private String getReplacementWithConfig(String data) {
+        for(ContentReplace c : configRules){
+            data = c.applyReplacement(data);
+        }
+        return data;
     }
 
     private static String getTopDomain(String host) {
@@ -323,6 +346,11 @@ public class ProxyFilter implements Filter {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private static List<ContentReplace> getConfigRules() {
+        XMLParser p = new XMLParser();
+        return p.parseConfig("conf.xml", XMLParser.getTgNames());
     }
 
 }
