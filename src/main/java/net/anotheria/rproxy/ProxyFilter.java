@@ -2,12 +2,10 @@ package net.anotheria.rproxy;
 
 import net.anotheria.moskito.aop.annotation.Monitor;
 import net.anotheria.rproxy.conf.ContentReplace;
-import net.anotheria.rproxy.conf.ContentReplaceRelative;
 import net.anotheria.rproxy.conf.XMLParser;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
-import net.anotheria.rproxy.replacement.ContentReplacement;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
 import org.slf4j.Logger;
