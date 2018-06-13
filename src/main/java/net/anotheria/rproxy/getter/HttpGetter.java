@@ -2,6 +2,7 @@ package net.anotheria.rproxy.getter;
 
 import net.anotheria.rproxy.ProxyFilter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -26,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * TODO comment this class
@@ -78,13 +81,25 @@ public class HttpGetter {
 //		}
         //somehow pass credentials to this method.
         UsernamePasswordCredentials cred = new UsernamePasswordCredentials("user1", "user1Pass");
+        List<HttpProxyHeader> hreq = req.getHeaders();
+        for(HttpProxyHeader h : hreq){
+           // System.out.println("Req..... " + h.getName() + " " + h.getValue());
+        }
         HttpResponse response = getHttpResponse(req, null);
+
+        Header[] headers = response.getAllHeaders();
+        for(Header h : headers){
+            //System.out.println("Response " + h.getName() + " : " + h.getValue());
+        }
+
 
         HttpProxyResponse ret = new HttpProxyResponse();
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
         final HttpEntity entity = response.getEntity();
-        ret.setContentType(entity.getContentType().getValue());
+        if(entity != null && entity.getContentType() != null) {
+            ret.setContentType(entity.getContentType().getValue());
+        }
 
         if (entity != null) {
             try {

@@ -24,6 +24,17 @@ public class HttpProxyRequest {
 		headers.add(new HttpProxyHeader(name, value));
 	}
 
+	public void removeHeader(String name){
+		HttpProxyHeader r = null;
+		for(HttpProxyHeader h : headers){
+			if(h.getName().equalsIgnoreCase(name)){
+				r = h;
+				break;
+			}
+		}
+		headers.remove(r);
+	}
+
 	public String getUrl() {
 		return url;
 	}

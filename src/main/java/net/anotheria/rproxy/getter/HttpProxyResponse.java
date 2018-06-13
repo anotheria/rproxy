@@ -51,7 +51,7 @@ public class HttpProxyResponse {
 			}
 		}
 		if(!set){
-			//set default encoding utf-8
+			//set default encoding utf-8 or ISO8859_1
 			this.contentEncoding = "UTF-8";
 		}
 	}

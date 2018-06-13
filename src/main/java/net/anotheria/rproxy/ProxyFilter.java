@@ -37,19 +37,17 @@ public class ProxyFilter implements Filter {
 
         ConfigJSON conf = JsonConfigurer.parseConfigurationFile("conf.json");
 
-        if(conf == null){
+        if (conf == null) {
             //parse from web.xml
             parseWebXml(filterConfig);
             System.out.println("Configuring from web.xml");
-        }else{
+        } else {
             //get from conf.json
             System.out.println("Configuring via conf.json" + conf.toString());
             configure(conf);
             configRules = JsonConfigurer.getReplacementRules();
         }
     }
-
-
 
 
     public void destroy() {
@@ -178,15 +176,28 @@ public class ProxyFilter implements Filter {
         while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
             String hValue = req.getHeader(hName);
+            System.out.println("Request header " + hName + " : " + hValue);
             if (hName.equals("referer")) {
                 hValue = StringUtils.replace(hValue, p.getMeSubFolder(), p.getBaseLink());
+                //hValue = p.getBaseLink();
             }
             if (hName.equals("host")) {
                 hValue = p.getHostBase();
             }
+//            if (hName.equals("origin")) {
+//                hValue = "http://localhost:8080/faq";
+//            }
+
+
             proxyRequest.addHeader(hName, hValue);
+
         }
 
+        //proxyRequest.removeHeader("cookie");
+        //proxyRequest.addHeader("cookie", "hblid=agtvDF1Y5Fn2ljDN7c9fe0M67TEd6AB3; olfsk=olfsk05741559938510821; _ga=GA1.1.1726846344.1528898076; _gid=GA1.1.1315206542.1528898076; JSESSIONID=5C747B0CF8B579F7297532BA335F5F6F; _gat=1");
+        //proxyRequest.removeHeader("origin");
+        //proxyRequest.addHeader("origin", "http://localhost:8080/faq/");
+       // proxyRequest.addHeader("cache-control", "no-cache");
         HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
 
 
@@ -217,11 +228,11 @@ public class ProxyFilter implements Filter {
                     p.getBaseLink(),
                     p.getMeSubFolder()
             ));
+            //System.out.println("Response Content encoding ++++++++++++   " + response.getContentEncoding());
 
             response.setData(data.getBytes());
-
         }
-
+        //System.out.println("----> Response Content encoding ++++++++++++   " + response.getContentEncoding());
         return response;
     }
 
@@ -336,7 +347,7 @@ public class ProxyFilter implements Filter {
             e.printStackTrace();
         }
         List<ProxyHelper> allProxyHelper = new LinkedList<>();
-        for(String baseUrl : conf.getBaseUrl()){
+        for (String baseUrl : conf.getBaseUrl()) {
             URL base = null;
 
             try {
