@@ -5,6 +5,8 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.KeyFactorySpi;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public class JsonConfigurer {
 
@@ -37,10 +39,29 @@ public class JsonConfigurer {
         return configuration;
     }
 
+    public static List<ContentReplace> getReplacementRules() {
+        if (instance == null || configuration == null || configuration.getContentReplacement() == null || configuration.getContentReplacement().isEmpty()) {
+            return null;
+        }
+
+        List<ContentReplace> rules = new LinkedList<>();
+        for (String[] arr : configuration.getContentReplacement()) {
+            //0-to, 1-with, 2-type
+            switch (arr[2]) {
+                case "url":
+                    String to = arr[0];
+                    String with = arr[1];
+                    rules.add(new ContentReplaceRelative(to, with));
+                    break;
+            }
+        }
+        return rules;
+    }
+
     private ConfigJSON parseConfiguration(String fileName) {
         ObjectMapper objectMapper = new ObjectMapper();
         File file = getFile(fileName);
-        if(file == null){
+        if (file == null) {
             return null;
         }
         try {

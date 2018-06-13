@@ -25,12 +25,13 @@ import java.util.*;
 @Monitor
 public class ProxyFilter implements Filter {
 
-    private static List<ContentReplace> configRules = getConfigRules();
+    //private static List<ContentReplace> configRules = getConfigRulesFromXml();
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFilter.class);
 
     private List<Rule> defaultRules;
     private List<ProxyHelper> helpers;
+    private List<ContentReplace> configRules;
 
     public void init(FilterConfig filterConfig) {
 
@@ -42,91 +43,13 @@ public class ProxyFilter implements Filter {
             System.out.println("Configuring from web.xml");
         }else{
             //get from conf.json
-            System.out.println("Configuring via conf.json");
+            System.out.println("Configuring via conf.json" + conf.toString());
             configure(conf);
+            configRules = JsonConfigurer.getReplacementRules();
         }
     }
 
-    private void configure(ConfigJSON conf) {
-        URL host = null;
-        String hostMe = null;
-        String hostProtocol = null;
-        try {
-            host = new URL(conf.getHostUrl());
-            hostMe = host.getHost();
-            hostProtocol = host.getProtocol() + "://";
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        List<ProxyHelper> allProxyHelper = new LinkedList<>();
-        for(String baseUrl : conf.getBaseUrl()){
-            URL base = null;
 
-            try {
-                base = new URL(baseUrl);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-
-            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
-            allProxyHelper.add(p);
-        }
-
-        if (conf.getSubDomainRules() != null) {
-            this.defaultRules = parseSubDomainRules(conf.getSubDomainRules(), allProxyHelper);
-        }
-
-        if (conf.getTopDomainRules() != null) {
-            parseTopDomainRules(conf.getTopDomainRules(), allProxyHelper);
-        }
-        this.helpers = new LinkedList<>(allProxyHelper);
-    }
-
-    private void parseWebXml(FilterConfig filterConfig) {
-        String[] baseUrls = filterConfig.getInitParameter("BaseURL").split(",");
-        URL host = null;
-        String hostMe = null;
-        String hostProtocol = null;
-        try {
-            host = new URL(filterConfig.getInitParameter("HostURL"));
-            hostMe = host.getHost();
-            hostProtocol = host.getProtocol() + "://";
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        //prepared links from BaseUrl param
-        List<ProxyHelper> allProxyHelper = new LinkedList<>();
-
-        for (String baseUrl : baseUrls) {
-            URL base = null;
-
-            try {
-                base = new URL(baseUrl);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-
-            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
-            allProxyHelper.add(p);
-
-        }
-
-        //fill rules for default behaviour for sub domains
-        String defRule = filterConfig.getInitParameter("SubDomainRule");
-        if (defRule != null) {
-            this.defaultRules = parseSubDomainRules(defRule.split(","), allProxyHelper);
-        }
-
-        //now add rules to sub domains for top domains
-        String topDomainRulesString = filterConfig.getInitParameter("TopDomainRule");
-        if (topDomainRulesString != null) {
-            parseTopDomainRules(topDomainRulesString.split(","), allProxyHelper);
-        }
-        this.helpers = new LinkedList<>(allProxyHelper);
-    }
 
 
     public void destroy() {
@@ -396,9 +319,90 @@ public class ProxyFilter implements Filter {
         }
     }
 
-    private static List<ContentReplace> getConfigRules() {
+    private static List<ContentReplace> getConfigRulesFromXml() {
         XMLParser p = new XMLParser();
         return p.parseConfig("conf.xml", XMLParser.getTgNames());
+    }
+
+    private void configure(ConfigJSON conf) {
+        URL host = null;
+        String hostMe = null;
+        String hostProtocol = null;
+        try {
+            host = new URL(conf.getHostUrl());
+            hostMe = host.getHost();
+            hostProtocol = host.getProtocol() + "://";
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        List<ProxyHelper> allProxyHelper = new LinkedList<>();
+        for(String baseUrl : conf.getBaseUrl()){
+            URL base = null;
+
+            try {
+                base = new URL(baseUrl);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+
+            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
+            allProxyHelper.add(p);
+        }
+
+        if (conf.getSubDomainRules() != null) {
+            this.defaultRules = parseSubDomainRules(conf.getSubDomainRules(), allProxyHelper);
+        }
+
+        if (conf.getTopDomainRules() != null) {
+            parseTopDomainRules(conf.getTopDomainRules(), allProxyHelper);
+        }
+        this.helpers = new LinkedList<>(allProxyHelper);
+    }
+
+    private void parseWebXml(FilterConfig filterConfig) {
+        String[] baseUrls = filterConfig.getInitParameter("BaseURL").split(",");
+        URL host = null;
+        String hostMe = null;
+        String hostProtocol = null;
+        try {
+            host = new URL(filterConfig.getInitParameter("HostURL"));
+            hostMe = host.getHost();
+            hostProtocol = host.getProtocol() + "://";
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        //prepared links from BaseUrl param
+        List<ProxyHelper> allProxyHelper = new LinkedList<>();
+
+        for (String baseUrl : baseUrls) {
+            URL base = null;
+
+            try {
+                base = new URL(baseUrl);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+
+            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
+            allProxyHelper.add(p);
+
+        }
+
+        //fill rules for default behaviour for sub domains
+        String defRule = filterConfig.getInitParameter("SubDomainRule");
+        if (defRule != null) {
+            this.defaultRules = parseSubDomainRules(defRule.split(","), allProxyHelper);
+        }
+
+        //now add rules to sub domains for top domains
+        String topDomainRulesString = filterConfig.getInitParameter("TopDomainRule");
+        if (topDomainRulesString != null) {
+            parseTopDomainRules(topDomainRulesString.split(","), allProxyHelper);
+        }
+        this.helpers = new LinkedList<>(allProxyHelper);
     }
 
 }
