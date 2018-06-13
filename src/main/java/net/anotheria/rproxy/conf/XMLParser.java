@@ -23,6 +23,9 @@ public class XMLParser {
     public List<ContentReplace> parseConfig(String fileName, List<String> tagNames) {
         try {
             File fXmlFile = getFile(fileName);
+            if(fXmlFile == null){
+                return null;
+            }
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
@@ -63,7 +66,7 @@ public class XMLParser {
 
     public static void main(String argv[]) {
         XMLParser p = new XMLParser();
-        List<ContentReplace> r = p.parseConfig("conf.xml", tgNames);
+        List<ContentReplace> r = p.parseConfig("conf1.xml", tgNames);
         String link = "/faq/wp-content/uploads/2018/04/TCL_logo_black_pink.png";
         String data = link + " somethin else";
         System.out.println(data);

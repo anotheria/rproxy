@@ -39,6 +39,7 @@ public class HttpProxyResponse {
 
 	public void setContentType(String contentType) {
 		this.contentType = contentType;
+		//System.out.println("Content type -----> " + contentType);
 		String[] cType = contentType.split(";" );
 		boolean set = false;
 		for(String p : cType){

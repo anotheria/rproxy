@@ -1,7 +1,9 @@
 package net.anotheria.rproxy;
 
 import net.anotheria.moskito.aop.annotation.Monitor;
+import net.anotheria.rproxy.conf.ConfigJSON;
 import net.anotheria.rproxy.conf.ContentReplace;
+import net.anotheria.rproxy.conf.JsonConfigurer;
 import net.anotheria.rproxy.conf.XMLParser;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
@@ -32,7 +34,56 @@ public class ProxyFilter implements Filter {
 
     public void init(FilterConfig filterConfig) {
 
+        ConfigJSON conf = JsonConfigurer.parseConfigurationFile("conf.json");
 
+        if(conf == null){
+            //parse from web.xml
+            parseWebXml(filterConfig);
+            System.out.println("Configuring from web.xml");
+        }else{
+            //get from conf.json
+            System.out.println("Configuring via conf.json");
+            configure(conf);
+        }
+    }
+
+    private void configure(ConfigJSON conf) {
+        URL host = null;
+        String hostMe = null;
+        String hostProtocol = null;
+        try {
+            host = new URL(conf.getHostUrl());
+            hostMe = host.getHost();
+            hostProtocol = host.getProtocol() + "://";
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        List<ProxyHelper> allProxyHelper = new LinkedList<>();
+        for(String baseUrl : conf.getBaseUrl()){
+            URL base = null;
+
+            try {
+                base = new URL(baseUrl);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+
+            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
+            allProxyHelper.add(p);
+        }
+
+        if (conf.getSubDomainRules() != null) {
+            this.defaultRules = parseSubDomainRules(conf.getSubDomainRules(), allProxyHelper);
+        }
+
+        if (conf.getTopDomainRules() != null) {
+            parseTopDomainRules(conf.getTopDomainRules(), allProxyHelper);
+        }
+        this.helpers = new LinkedList<>(allProxyHelper);
+    }
+
+    private void parseWebXml(FilterConfig filterConfig) {
         String[] baseUrls = filterConfig.getInitParameter("BaseURL").split(",");
         URL host = null;
         String hostMe = null;
@@ -223,22 +274,20 @@ public class ProxyFilter implements Filter {
             data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
             //relative hrefs replacing
             data = data.replaceAll("href=\"/", "href=\"" + subFolder + "/");
-            response.setData(URLReplacementUtil.replace(
-                    response.getData(),
-                    response.getContentEncoding(),
-                    p.getBaseLink(),
-                    p.getMeSubFolder()
-            ));
+
 
             data = data.replaceAll("src=\"/", "src=\"" + subFolder + "/");
-            response.setData(URLReplacementUtil.replace(
-                    response.getData(),
-                    response.getContentEncoding(),
-                    p.getBaseLink(),
-                    p.getMeSubFolder()
-            ));
+
 
             data = data.replaceAll("localhost/", "localhost:8080/");
+
+            //data = data.replaceAll("woff2", "woff" );
+
+
+            if (configRules != null) {
+                data = getReplacementWithConfig(data);
+            }
+
             response.setData(URLReplacementUtil.replace(
                     response.getData(),
                     response.getContentEncoding(),
@@ -246,16 +295,15 @@ public class ProxyFilter implements Filter {
                     p.getMeSubFolder()
             ));
 
-           data = getReplacementWithConfig(data);
-
             response.setData(data.getBytes());
+
         }
 
         return response;
     }
 
     private String getReplacementWithConfig(String data) {
-        for(ContentReplace c : configRules){
+        for (ContentReplace c : configRules) {
             data = c.applyReplacement(data);
         }
         return data;
@@ -314,6 +362,8 @@ public class ProxyFilter implements Filter {
         p.setSubFolder(subFolder);
         p.setMeSubFolder(meSubFolder);
         p.setBaseLink(baseLink);
+
+        //System.out.println(p.toString());
         return p;
     }
 
