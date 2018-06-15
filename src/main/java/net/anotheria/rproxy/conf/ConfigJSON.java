@@ -10,6 +10,7 @@ public class ConfigJSON {
     private String[] subDomainRules;
     private String[] topDomainRules;
     private List<String[]> contentReplacement;
+    private Credentials[] credentials;
 
     public String[] getBaseUrl() {
         return baseUrl;
@@ -51,6 +52,14 @@ public class ConfigJSON {
         this.contentReplacement = contentReplacement;
     }
 
+    public Credentials[] getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(Credentials[] credentials) {
+        this.credentials = credentials;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -65,7 +74,10 @@ public class ConfigJSON {
         if (!Arrays.equals(subDomainRules, that.subDomainRules)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(topDomainRules, that.topDomainRules)) return false;
-        return contentReplacement != null ? contentReplacement.equals(that.contentReplacement) : that.contentReplacement == null;
+        if (contentReplacement != null ? !contentReplacement.equals(that.contentReplacement) : that.contentReplacement != null)
+            return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        return Arrays.equals(credentials, that.credentials);
     }
 
     @Override
@@ -75,17 +87,7 @@ public class ConfigJSON {
         result = 31 * result + Arrays.hashCode(subDomainRules);
         result = 31 * result + Arrays.hashCode(topDomainRules);
         result = 31 * result + (contentReplacement != null ? contentReplacement.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(credentials);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "ConfigJSON{" +
-                "baseUrl=" + Arrays.toString(baseUrl) +
-                ", hostUrl='" + hostUrl + '\'' +
-                ", subDomainRules=" + Arrays.toString(subDomainRules) +
-                ", topDomainRules=" + Arrays.toString(topDomainRules) +
-                ", contentReplacement=" + contentReplacement +
-                '}';
     }
 }

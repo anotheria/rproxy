@@ -1,12 +1,9 @@
 package net.anotheria.rproxy.getter;
 
-import net.anotheria.rproxy.ProxyFilter;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.Header;
+import net.anotheria.rproxy.conf.Credentials;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
@@ -27,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Enumeration;
-import java.util.List;
 
 /**
  * TODO comment this class
@@ -61,36 +56,22 @@ public class HttpGetter {
     }
 
 
-    public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
+    public static HttpProxyResponse getUrlContent(HttpProxyRequest req, Credentials cred) throws IOException {
         //System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
-//        HttpClient client = HttpClientBuilder.create().build();
-//
 
-//		HttpGet request = new HttpGet(req.getUrl());
-//
-//		for (HttpProxyHeader header : req.getHeaders()){
-//			request.addHeader(header.getName(), header.getValue());
-//		}
-//
-//		HttpResponse response = null;
-//		try {
-//			response = client.execute(request);
-//		} catch (IOException e) {
-//			throw e;
-//		}
-        //somehow pass credentials to this method.
-        UsernamePasswordCredentials cred = new UsernamePasswordCredentials("user1", "user1Pass");
-        List<HttpProxyHeader> hreq = req.getHeaders();
-        for(HttpProxyHeader h : hreq){
-           // System.out.println("Req..... " + h.getName() + " " + h.getValue());
-        }
-        HttpResponse response = getHttpResponse(req, null);
 
-        Header[] headers = response.getAllHeaders();
-        for(Header h : headers){
-            //System.out.println("Response " + h.getName() + " : " + h.getValue());
-        }
+        //List<HttpProxyHeader> hreq = req.getHeaders();
+//        for(HttpProxyHeader h : hreq){
+//           // System.out.println("Req..... " + h.getName() + " " + h.getValue());
+//        }
+
+        HttpResponse response = getHttpResponse(req, cred);
+
+        //Header[] headers = response.getAllHeaders();
+//        for(Header h : headers){
+//            //System.out.println("Response " + h.getName() + " : " + h.getValue());
+//        }
 
 
         HttpProxyResponse ret = new HttpProxyResponse();
@@ -115,7 +96,7 @@ public class HttpGetter {
         return ret;
     }
 
-    public static HttpResponse getHttpResponse(HttpProxyRequest req, UsernamePasswordCredentials credentials) throws IOException {
+    public static HttpResponse getHttpResponse(HttpProxyRequest req, Credentials credentials) throws IOException {
         HttpGet request = new HttpGet(req.getUrl());
 
         for (HttpProxyHeader header : req.getHeaders()) {
@@ -124,10 +105,12 @@ public class HttpGetter {
         }
         HttpClient client;
         if(credentials != null){
+            //System.out.println("Using credentials : " + credentials.toString());
+            UsernamePasswordCredentials cred = new UsernamePasswordCredentials(credentials.getUserName(), credentials.getPassword());
             CredentialsProvider provider = new BasicCredentialsProvider();
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
-            provider.setCredentials(authScope, credentials);
+            provider.setCredentials(authScope, cred);
             client = HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
         }else{
             client = HttpClientBuilder.create().build();
@@ -135,15 +118,4 @@ public class HttpGetter {
 
         return client.execute(request);
     }
-
-    private static boolean areSame(Credentials c1, Credentials c2) {
-        if (c1 == null) {
-            return c2 == null;
-        } else {
-            return StringUtils.equals(c1.getUserPrincipal().getName(), c1.getUserPrincipal().getName()) &&
-                    StringUtils.equals(c1.getPassword(), c1.getPassword());
-        }
-    }
-
-
 }

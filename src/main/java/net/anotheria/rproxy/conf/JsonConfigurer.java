@@ -1,7 +1,6 @@
 package net.anotheria.rproxy.conf;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bouncycastle.jcajce.provider.asymmetric.ec.KeyFactorySpi;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,7 +76,7 @@ public class JsonConfigurer {
         try {
             return new File(classLoader.getResource(fileName).getFile());
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             return null;
         }
     }

@@ -1,13 +1,11 @@
 package net.anotheria.rproxy;
 
 import net.anotheria.moskito.aop.annotation.Monitor;
-import net.anotheria.rproxy.conf.ConfigJSON;
-import net.anotheria.rproxy.conf.ContentReplace;
-import net.anotheria.rproxy.conf.JsonConfigurer;
-import net.anotheria.rproxy.conf.XMLParser;
+import net.anotheria.rproxy.conf.*;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
+import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
 import org.slf4j.Logger;
@@ -32,6 +30,7 @@ public class ProxyFilter implements Filter {
     private List<Rule> defaultRules;
     private List<ProxyHelper> helpers;
     private List<ContentReplace> configRules;
+    private Map<Integer, Credentials> cred;
 
     public void init(FilterConfig filterConfig) {
 
@@ -44,6 +43,12 @@ public class ProxyFilter implements Filter {
         } else {
             //get from conf.json
             System.out.println("Configuring via conf.json" + conf.toString());
+            if (conf.getCredentials() != null && conf.getCredentials().length != 0) {
+                cred = new HashMap<>();
+                for (Credentials c : conf.getCredentials()) {
+                    cred.put(c.getLinkNum(), c);
+                }
+            }
             configure(conf);
             configRules = JsonConfigurer.getReplacementRules();
         }
@@ -176,30 +181,23 @@ public class ProxyFilter implements Filter {
         while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
             String hValue = req.getHeader(hName);
-            System.out.println("Request header " + hName + " : " + hValue);
+            //System.out.println("Request header " + hName + " : " + hValue);
             if (hName.equals("referer")) {
                 hValue = StringUtils.replace(hValue, p.getMeSubFolder(), p.getBaseLink());
-                //hValue = p.getBaseLink();
             }
             if (hName.equals("host")) {
                 hValue = p.getHostBase();
             }
-//            if (hName.equals("origin")) {
-//                hValue = "http://localhost:8080/faq";
-//            }
-
-
             proxyRequest.addHeader(hName, hValue);
 
         }
-
-        //proxyRequest.removeHeader("cookie");
-        //proxyRequest.addHeader("cookie", "hblid=agtvDF1Y5Fn2ljDN7c9fe0M67TEd6AB3; olfsk=olfsk05741559938510821; _ga=GA1.1.1726846344.1528898076; _gid=GA1.1.1315206542.1528898076; JSESSIONID=5C747B0CF8B579F7297532BA335F5F6F; _gat=1");
-        //proxyRequest.removeHeader("origin");
-        //proxyRequest.addHeader("origin", "http://localhost:8080/faq/");
-       // proxyRequest.addHeader("cache-control", "no-cache");
-        HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
-
+        HttpProxyResponse response;
+        int index = helpers.indexOf(p) + 1;
+        if (index == -1) {
+            response = HttpGetter.getUrlContent(proxyRequest, null);
+        } else {
+            response = HttpGetter.getUrlContent(proxyRequest, cred.get(index));
+        }
 
         //check for images and urls.
 
@@ -210,12 +208,14 @@ public class ProxyFilter implements Filter {
             data = data.replaceAll("href=\"/", "href=\"" + subFolder + "/");
 
 
+            data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, p.getSubFolder());
+
             data = data.replaceAll("src=\"/", "src=\"" + subFolder + "/");
 
 
             data = data.replaceAll("localhost/", "localhost:8080/");
 
-            //data = data.replaceAll("woff2", "woff" );
+            data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
 
 
             if (configRules != null) {
@@ -228,11 +228,8 @@ public class ProxyFilter implements Filter {
                     p.getBaseLink(),
                     p.getMeSubFolder()
             ));
-            //System.out.println("Response Content encoding ++++++++++++   " + response.getContentEncoding());
-
             response.setData(data.getBytes());
         }
-        //System.out.println("----> Response Content encoding ++++++++++++   " + response.getContentEncoding());
         return response;
     }
 
