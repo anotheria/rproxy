@@ -3,6 +3,9 @@ package net.anotheria.rproxy.conf;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Configuration info from json file.
+ */
 public class ConfigJSON {
 
     private String[] baseUrl;

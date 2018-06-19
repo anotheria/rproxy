@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Get configuration from json file.
+ */
 public class JsonConfigurer {
 
     private static ConfigJSON configuration;
@@ -45,7 +48,6 @@ public class JsonConfigurer {
 
         List<ContentReplace> rules = new LinkedList<>();
         for (String[] arr : configuration.getContentReplacement()) {
-            //0-to, 1-with, 2-type
             switch (arr[2]) {
                 case "url":
                     String to = arr[0];
@@ -76,14 +78,7 @@ public class JsonConfigurer {
         try {
             return new File(classLoader.getResource(fileName).getFile());
         } catch (Exception e) {
-            //e.printStackTrace();
             return null;
         }
-    }
-
-    public static void main(String... args) {
-        System.out.println(JsonConfigurer.getConfiguration());
-        System.out.println(JsonConfigurer.parseConfigurationFile("conf.json"));
-        System.out.println(JsonConfigurer.getConfiguration());
     }
 }

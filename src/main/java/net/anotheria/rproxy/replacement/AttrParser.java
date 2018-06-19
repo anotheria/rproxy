@@ -1,18 +1,20 @@
 package net.anotheria.rproxy.replacement;
 
-import java.util.LinkedList;
-import java.util.List;
-
 public class AttrParser {
+    private AttrParser(){
 
+    }
+
+    /**
+     * Adds subdomain in relative paths for each link in srcsets.
+     * @param data html document
+     * @param sub subdomain (subfolder)
+     * @return html document with replacement
+     */
     public static String addSubFolderToRelativePathesInSrcSets(String data, String sub) {
-        List<String> links = new LinkedList<>();
-
         int c = 1;
         for (String d : data.split("srcset")) {
-
             if (c % 2 == 0) {
-                //String temp = d;
                 char[] ch = d.toCharArray();
                 String content = null;
                 for (int i = 0; i < ch.length; i++) {
@@ -33,17 +35,12 @@ public class AttrParser {
                 String[] linkArr = content.split(" ");
                 for (String link : linkArr) {
                     if (link.startsWith("/")) {
-                        links.add(sub + link);
                         data = data.replaceAll(link, sub + link);
                     }
                 }
-
-                System.out.println(links);
-
             }
             c++;
         }
-
         return data;
     }
 }

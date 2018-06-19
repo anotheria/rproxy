@@ -1,5 +1,8 @@
 package net.anotheria.rproxy.conf;
 
+/**
+ * Credentials entity. Username and Password for specific URL.
+ */
 public class Credentials {
 
     private String userName;

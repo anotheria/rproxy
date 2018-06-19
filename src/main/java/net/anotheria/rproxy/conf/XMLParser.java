@@ -12,6 +12,9 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Get configuration from xml.
+ */
 public class XMLParser {
 
     private static final List<String> tgNames = new LinkedList<>();
@@ -20,10 +23,14 @@ public class XMLParser {
         tgNames.add("replace");
     }
 
+    private XMLParser() {
+
+    }
+
     public List<ContentReplace> parseConfig(String fileName, List<String> tagNames) {
         try {
             File fXmlFile = getFile(fileName);
-            if(fXmlFile == null){
+            if (fXmlFile == null) {
                 return null;
             }
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -43,7 +50,7 @@ public class XMLParser {
                     if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                         Element eElement = (Element) nNode;
                         String type = eElement.getAttribute("type");
-                        switch (type){
+                        switch (type) {
                             case "relative":
                                 String to = eElement.getElementsByTagName("URLtoReplace").item(0).getTextContent();
                                 String with = eElement.getElementsByTagName("URLreplaceWith").item(0).getTextContent();
@@ -70,9 +77,9 @@ public class XMLParser {
         String link = "/faq/wp-content/uploads/2018/04/TCL_logo_black_pink.png";
         String data = link + " somethin else";
         System.out.println(data);
-        for(ContentReplace c : r){
+        for (ContentReplace c : r) {
             ContentReplaceRelative cr = (ContentReplaceRelative) c;
-           // System.out.println(cr.toString());
+            // System.out.println(cr.toString());
             data = c.applyReplacement(data);
         }
         System.out.println(data);
@@ -83,7 +90,7 @@ public class XMLParser {
         return new File(classLoader.getResource(fileName).getFile());
     }
 
-    public static List<String> getTgNames(){
+    public static List<String> getTgNames() {
         return tgNames;
     }
 

@@ -35,7 +35,7 @@ public class ProxyFilter implements Filter {
     public void init(FilterConfig filterConfig) {
 
         ConfigJSON conf = JsonConfigurer.parseConfigurationFile("conf.json");
-
+        cred = new HashMap<>();
         if (conf == null) {
             //parse from web.xml
             parseWebXml(filterConfig);
@@ -44,7 +44,6 @@ public class ProxyFilter implements Filter {
             //get from conf.json
             System.out.println("Configuring via conf.json" + conf.toString());
             if (conf.getCredentials() != null && conf.getCredentials().length != 0) {
-                cred = new HashMap<>();
                 for (Credentials c : conf.getCredentials()) {
                     cred.put(c.getLinkNum(), c);
                 }
@@ -76,22 +75,16 @@ public class ProxyFilter implements Filter {
 
             String topPath = getTopPath(appUrl);
             String topDomain = getTopDomain(u.getHost());
-
-            // System.out.println(topDomain + " -> top domain here");
-
             HttpProxyResponse response = null;
 
             if (defaultRules != null) {
                 //if top path is present
                 //System.out.println("defRules != null");
                 for (Rule defRule : defaultRules) {
-                    //System.out.println(defRule.getSubDomain() + " <???> " + topPath);
                     //search rule where subdom equals to current request top path
                     if (defRule.getSubDomain().equals(topPath)) {
-                        // System.out.println("defRules found by topPath!");
                         //found rule! now check if it has top domain subrules
                         if (!defRule.getTopDomainList().isEmpty()) {
-                            //System.out.println("subRules != null");
                             //it has subrules, search for current url topdomain rule
                             for (RuleTopDomain topDomRule : defRule.getTopDomainList()) {
                                 //if found - do request for current rule, otherwise do without subrule
@@ -102,8 +95,6 @@ public class ProxyFilter implements Filter {
                                 response = getResponse(path, req, defRule.getProxyHelperDefault());
                             }
                         } else {
-                            ///System.out.println("subRules == null");
-                            //System.out.println(defRule.getProxyHelperDefault().toString());
                             response = getResponse(path, req, defRule.getProxyHelperDefault());
                             break;
                         }
@@ -118,10 +109,7 @@ public class ProxyFilter implements Filter {
             res.setContentType(response.getContentType());
             res.getOutputStream().write(response.getData());
             res.getOutputStream().flush();
-        } catch (ServletException e) {
-            e.printStackTrace();
-            LOG.error(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
+        } catch (ServletException | UnsupportedEncodingException e) {
             e.printStackTrace();
             LOG.error(e.getMessage());
         } catch (IOException e) {
@@ -181,7 +169,6 @@ public class ProxyFilter implements Filter {
         while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
             String hValue = req.getHeader(hName);
-            //System.out.println("Request header " + hName + " : " + hValue);
             if (hName.equals("referer")) {
                 hValue = StringUtils.replace(hValue, p.getMeSubFolder(), p.getBaseLink());
             }
@@ -193,7 +180,7 @@ public class ProxyFilter implements Filter {
         }
         HttpProxyResponse response;
         int index = helpers.indexOf(p) + 1;
-        if (index == -1) {
+        if (index == -1 || cred.get(index) == null) {
             response = HttpGetter.getUrlContent(proxyRequest, null);
         } else {
             response = HttpGetter.getUrlContent(proxyRequest, cred.get(index));
@@ -294,7 +281,6 @@ public class ProxyFilter implements Filter {
         p.setMeSubFolder(meSubFolder);
         p.setBaseLink(baseLink);
 
-        //System.out.println(p.toString());
         return p;
     }
 
@@ -327,10 +313,10 @@ public class ProxyFilter implements Filter {
         }
     }
 
-    private static List<ContentReplace> getConfigRulesFromXml() {
-        XMLParser p = new XMLParser();
-        return p.parseConfig("conf.xml", XMLParser.getTgNames());
-    }
+//    private static List<ContentReplace> getConfigRulesFromXml() {
+//        XMLParser p = new XMLParser();
+//        return p.parseConfig("conf.xml", XMLParser.getTgNames());
+//    }
 
     private void configure(ConfigJSON conf) {
         URL host = null;
