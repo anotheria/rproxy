@@ -4,9 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Configuration info from json file.
+ * ConfigurationEntity info from json file.
  */
-public class ConfigJSON {
+public class ConfigurationEntity {
 
     private String[] baseUrl;
     private String hostUrl;
@@ -68,7 +68,7 @@ public class ConfigJSON {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ConfigJSON that = (ConfigJSON) o;
+        ConfigurationEntity that = (ConfigurationEntity) o;
 
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(baseUrl, that.baseUrl)) return false;

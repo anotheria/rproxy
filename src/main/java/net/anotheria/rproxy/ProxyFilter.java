@@ -23,6 +23,9 @@ import java.util.*;
 @Monitor
 public class ProxyFilter implements Filter {
 
+    private static String url;
+    private static String currentSubFolder;
+
     //private static List<ContentReplace> configRules = getConfigRulesFromXml();
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFilter.class);
@@ -34,7 +37,7 @@ public class ProxyFilter implements Filter {
 
     public void init(FilterConfig filterConfig) {
 
-        ConfigJSON conf = JsonConfigurer.parseConfigurationFile("conf.json");
+        ConfigurationEntity conf = Configurer.parseConfigurationFile("conf.json");
         cred = new HashMap<>();
         if (conf == null) {
             //parse from web.xml
@@ -49,7 +52,7 @@ public class ProxyFilter implements Filter {
                 }
             }
             configure(conf);
-            configRules = JsonConfigurer.getReplacementRules();
+            configRules = Configurer.getReplacementRules();
         }
     }
 
@@ -59,17 +62,29 @@ public class ProxyFilter implements Filter {
 
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) {
 
+
         try {
-            if (!(servletRequest instanceof HttpServletRequest)) {
-                filterChain.doFilter(servletRequest, servletResponse);
-                return;
-            }
 
             HttpServletRequest req = (HttpServletRequest) servletRequest;
             HttpServletResponse res = (HttpServletResponse) servletResponse;
 
             String path = req.getRequestURI();
             String appUrl = req.getRequestURL().toString();
+
+
+            System.out.println("Route : " + appUrl);
+            //url = req.getRequestURL().toString();
+            String top = getTopPath(appUrl);
+            if(top != null ){
+                currentSubFolder = "/" + top;
+            }
+            System.out.println(currentSubFolder);
+            System.out.println(appUrl);
+
+            if (!(servletRequest instanceof HttpServletRequest)) {
+                filterChain.doFilter(servletRequest, servletResponse);
+                return;
+            }
 
             URL u = new URL(appUrl);
 
@@ -105,10 +120,12 @@ public class ProxyFilter implements Filter {
                 response = getResponse(path, req, helpers.get(0));
             }
 
-            //handle return type, only write out on wrong return type.
-            res.setContentType(response.getContentType());
-            res.getOutputStream().write(response.getData());
-            res.getOutputStream().flush();
+            if(response != null) {
+                //handle return type, only write out on wrong return type.
+                res.setContentType(response.getContentType());
+                res.getOutputStream().write(response.getData());
+                res.getOutputStream().flush();
+            }
         } catch (ServletException | UnsupportedEncodingException e) {
             e.printStackTrace();
             LOG.error(e.getMessage());
@@ -155,9 +172,14 @@ public class ProxyFilter implements Filter {
      */
     private HttpProxyResponse getResponse(String path, HttpServletRequest req, ProxyHelper p) throws IOException {
 
-        String subFolder = p.getSubFolder();
-        if (!subFolder.equals("")) {
-            path = path.replaceAll(subFolder, "");
+        //String subFolder = p.getSubFolder();
+
+        System.out.println("Current sub ->>>>> " + currentSubFolder);
+        p.subFolderUpdate(currentSubFolder);
+        System.out.println(p.toString());
+
+        if (!currentSubFolder.equals("")) {
+            path = path.replaceAll(currentSubFolder, "");
         }
         String queryString = req.getQueryString();
         String pathToGet = path;
@@ -189,18 +211,21 @@ public class ProxyFilter implements Filter {
         //check for images and urls.
 
         if (response.isHtml()) {
+
             String data = new String(response.getData(), response.getContentEncoding());
             data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
             //relative hrefs replacing
-            data = data.replaceAll("href=\"/", "href=\"" + subFolder + "/");
+            data = data.replaceAll("href=\"/", "href=\"" + currentSubFolder + "/");
 
 
-            data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, p.getSubFolder());
+            data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, currentSubFolder);
 
-            data = data.replaceAll("src=\"/", "src=\"" + subFolder + "/");
+            data = data.replaceAll("src=\"/", "src=\"" + currentSubFolder + "/");
 
 
             data = data.replaceAll("localhost/", "localhost:8080/");
+
+            //data = data.replaceAll("/category", "");
 
             data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
 
@@ -259,15 +284,13 @@ public class ProxyFilter implements Filter {
 
     }
 
-    /**
-     * @param hostMe       current host
-     * @param hostProtocol current host protocol
-     * @param base         URL of resource
-     * @return ProxyHelper instance
-     */
-    private ProxyHelper getProxyInstance(String hostMe, String hostProtocol, URL base) {
+    private ProxyHelper getProxyInstance(URL host, URL base) {
 
         ProxyHelper p = new ProxyHelper();
+
+        String hostMe = host.getHost();
+        String hostProtocol = host.getProtocol() + "://";
+
         String hostBase = base.getHost();
         String baseProtocol = base.getProtocol() + "://";
         String subFolder = getSubFolder(hostBase);
@@ -275,11 +298,22 @@ public class ProxyFilter implements Filter {
         String meSubFolder = me + subFolder;
         String baseLink = baseProtocol + hostBase;
 
-        p.setTopDomain(getTopDomain(base.getHost()));
+
         p.setHostBase(hostBase);
-        p.setSubFolder(subFolder);
-        p.setMeSubFolder(meSubFolder);
         p.setBaseLink(baseLink);
+        p.setMeSubFolder(meSubFolder);
+        p.setSubFolder(subFolder);
+        p.setTopDomain(getTopDomain(base.getHost()));
+        p.setHostProtocol(hostProtocol);
+        p.setHostMe(hostMe);
+        p.setMe(me);
+
+
+//        p.setTopDomain(getTopDomain(base.getHost()));
+//        p.setHostBase(hostBase);
+//        p.setSubFolder(subFolder);
+//        p.setMeSubFolder(meSubFolder);
+//        p.setBaseLink(baseLink);
 
         return p;
     }
@@ -318,7 +352,7 @@ public class ProxyFilter implements Filter {
 //        return p.parseConfig("conf.xml", XMLParser.getTgNames());
 //    }
 
-    private void configure(ConfigJSON conf) {
+    private void configure(ConfigurationEntity conf) {
         URL host = null;
         String hostMe = null;
         String hostProtocol = null;
@@ -340,7 +374,7 @@ public class ProxyFilter implements Filter {
             }
 
 
-            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
+            ProxyHelper p = getProxyInstance(host, base);
             allProxyHelper.add(p);
         }
 
@@ -379,8 +413,8 @@ public class ProxyFilter implements Filter {
                 e.printStackTrace();
             }
 
-
-            ProxyHelper p = getProxyInstance(hostMe, hostProtocol, base);
+            //System.out.println("Base url : " + baseUrl);
+            ProxyHelper p = getProxyInstance(host, base);
             allProxyHelper.add(p);
 
         }

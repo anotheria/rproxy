@@ -10,32 +10,32 @@ import java.util.List;
 /**
  * Get configuration from json file.
  */
-public class JsonConfigurer {
+public class Configurer {
 
-    private static ConfigJSON configuration;
-    private static JsonConfigurer instance;
+    private static ConfigurationEntity configuration;
+    private static Configurer instance;
 
-    private JsonConfigurer() {
+    private Configurer() {
 
     }
 
     /**
      * Get parsed configuration.
      *
-     * @return ConfigJSON instance
+     * @return ConfigurationEntity instance
      */
-    public static ConfigJSON getConfiguration() {
+    public static ConfigurationEntity getConfiguration() {
         return configuration;
     }
 
     /**
-     * Force to parse document and update configuration for JsonConfigurer.class
+     * Force to parse document and update configuration for Configurer.class
      *
      * @param fileName path to the config file.
      */
-    public static ConfigJSON parseConfigurationFile(String fileName) {
+    public static ConfigurationEntity parseConfigurationFile(String fileName) {
         if (instance == null) {
-            instance = new JsonConfigurer();
+            instance = new Configurer();
         }
         configuration = instance.parseConfiguration(fileName);
         return configuration;
@@ -59,14 +59,14 @@ public class JsonConfigurer {
         return rules;
     }
 
-    private ConfigJSON parseConfiguration(String fileName) {
+    private ConfigurationEntity parseConfiguration(String fileName) {
         ObjectMapper objectMapper = new ObjectMapper();
         File file = getFile(fileName);
         if (file == null) {
             return null;
         }
         try {
-            return objectMapper.readValue(file, ConfigJSON.class);
+            return objectMapper.readValue(file, ConfigurationEntity.class);
         } catch (IOException e) {
             e.printStackTrace();
             return null;

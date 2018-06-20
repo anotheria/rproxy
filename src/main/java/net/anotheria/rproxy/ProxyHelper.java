@@ -1,5 +1,7 @@
 package net.anotheria.rproxy;
 
+import java.net.URL;
+
 /**
  * Class represents data for requests.
  */
@@ -10,6 +12,9 @@ public class ProxyHelper {
     private String meSubFolder;
     private String subFolder;
     private String topDomain;
+    private String hostProtocol;
+    private String hostMe;
+    private String me;
 
     public String getHostBase() {
         return hostBase;
@@ -51,6 +56,30 @@ public class ProxyHelper {
         this.topDomain = topDomain;
     }
 
+    public String getHostProtocol() {
+        return hostProtocol;
+    }
+
+    public void setHostProtocol(String hostProtocol) {
+        this.hostProtocol = hostProtocol;
+    }
+
+    public String getHostMe() {
+        return hostMe;
+    }
+
+    public void setHostMe(String hostMe) {
+        this.hostMe = hostMe;
+    }
+
+    public String getMe() {
+        return me;
+    }
+
+    public void setMe(String me) {
+        this.me = me;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -62,7 +91,10 @@ public class ProxyHelper {
         if (baseLink != null ? !baseLink.equals(that.baseLink) : that.baseLink != null) return false;
         if (meSubFolder != null ? !meSubFolder.equals(that.meSubFolder) : that.meSubFolder != null) return false;
         if (subFolder != null ? !subFolder.equals(that.subFolder) : that.subFolder != null) return false;
-        return topDomain != null ? topDomain.equals(that.topDomain) : that.topDomain == null;
+        if (topDomain != null ? !topDomain.equals(that.topDomain) : that.topDomain != null) return false;
+        if (hostProtocol != null ? !hostProtocol.equals(that.hostProtocol) : that.hostProtocol != null) return false;
+        if (hostMe != null ? !hostMe.equals(that.hostMe) : that.hostMe != null) return false;
+        return me != null ? me.equals(that.me) : that.me == null;
     }
 
     @Override
@@ -72,7 +104,16 @@ public class ProxyHelper {
         result = 31 * result + (meSubFolder != null ? meSubFolder.hashCode() : 0);
         result = 31 * result + (subFolder != null ? subFolder.hashCode() : 0);
         result = 31 * result + (topDomain != null ? topDomain.hashCode() : 0);
+        result = 31 * result + (hostProtocol != null ? hostProtocol.hashCode() : 0);
+        result = 31 * result + (hostMe != null ? hostMe.hashCode() : 0);
+        result = 31 * result + (me != null ? me.hashCode() : 0);
         return result;
+    }
+
+    public void subFolderUpdate(String currentSubFolder) {
+        System.out.println("!! " + currentSubFolder);
+        subFolder = currentSubFolder;
+        meSubFolder = me + subFolder;
     }
 
     @Override
@@ -83,6 +124,9 @@ public class ProxyHelper {
                 ", meSubFolder='" + meSubFolder + '\'' +
                 ", subFolder='" + subFolder + '\'' +
                 ", topDomain='" + topDomain + '\'' +
+                ", hostProtocol='" + hostProtocol + '\'' +
+                ", hostMe='" + hostMe + '\'' +
+                ", me='" + me + '\'' +
                 '}';
     }
 }
