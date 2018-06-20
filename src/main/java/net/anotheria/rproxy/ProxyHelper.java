@@ -111,7 +111,7 @@ public class ProxyHelper {
     }
 
     public void subFolderUpdate(String currentSubFolder) {
-        System.out.println("!! " + currentSubFolder);
+        //System.out.println("!! " + currentSubFolder);
         subFolder = currentSubFolder;
         meSubFolder = me + subFolder;
     }

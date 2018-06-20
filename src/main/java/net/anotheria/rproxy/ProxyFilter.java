@@ -61,8 +61,6 @@ public class ProxyFilter implements Filter {
     }
 
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) {
-
-
         try {
 
             HttpServletRequest req = (HttpServletRequest) servletRequest;
@@ -71,15 +69,14 @@ public class ProxyFilter implements Filter {
             String path = req.getRequestURI();
             String appUrl = req.getRequestURL().toString();
 
-
-            System.out.println("Route : " + appUrl);
+            //System.out.println("Route : " + appUrl);
             //url = req.getRequestURL().toString();
             String top = getTopPath(appUrl);
             if(top != null ){
                 currentSubFolder = "/" + top;
             }
-            System.out.println(currentSubFolder);
-            System.out.println(appUrl);
+//            System.out.println(currentSubFolder);
+//            System.out.println(appUrl);
 
             if (!(servletRequest instanceof HttpServletRequest)) {
                 filterChain.doFilter(servletRequest, servletResponse);
@@ -174,9 +171,9 @@ public class ProxyFilter implements Filter {
 
         //String subFolder = p.getSubFolder();
 
-        System.out.println("Current sub ->>>>> " + currentSubFolder);
+        //System.out.println("Current sub ->>>>> " + currentSubFolder);
         p.subFolderUpdate(currentSubFolder);
-        System.out.println(p.toString());
+        //System.out.println(p.toString());
 
         if (!currentSubFolder.equals("")) {
             path = path.replaceAll(currentSubFolder, "");
@@ -354,12 +351,12 @@ public class ProxyFilter implements Filter {
 
     private void configure(ConfigurationEntity conf) {
         URL host = null;
-        String hostMe = null;
-        String hostProtocol = null;
+        //String hostMe = null;
+        //String hostProtocol = null;
         try {
             host = new URL(conf.getHostUrl());
-            hostMe = host.getHost();
-            hostProtocol = host.getProtocol() + "://";
+           // hostMe = host.getHost();
+            //hostProtocol = host.getProtocol() + "://";
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -391,12 +388,12 @@ public class ProxyFilter implements Filter {
     private void parseWebXml(FilterConfig filterConfig) {
         String[] baseUrls = filterConfig.getInitParameter("BaseURL").split(",");
         URL host = null;
-        String hostMe = null;
-        String hostProtocol = null;
+        //String hostMe = null;
+        //String hostProtocol = null;
         try {
             host = new URL(filterConfig.getInitParameter("HostURL"));
-            hostMe = host.getHost();
-            hostProtocol = host.getProtocol() + "://";
+            //hostMe = host.getHost();
+            //hostProtocol = host.getProtocol() + "://";
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
