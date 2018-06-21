@@ -32,7 +32,7 @@ public class ProxyFilter implements Filter {
 
     private List<Rule> defaultRules;
     private List<ProxyHelper> helpers;
-    private List<ContentReplace> configRules;
+    private Map<Integer, List<ContentReplace>> configRules;
     private Map<Integer, Credentials> cred;
 
     public void init(FilterConfig filterConfig) {
@@ -227,8 +227,8 @@ public class ProxyFilter implements Filter {
             data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
 
 
-            if (configRules != null) {
-                data = getReplacementWithConfig(data);
+            if (index != -1 && configRules.get(index) != null) {
+                data = getReplacementWithConfig(data, configRules.get(index));
             }
 
             response.setData(URLReplacementUtil.replace(
@@ -242,8 +242,8 @@ public class ProxyFilter implements Filter {
         return response;
     }
 
-    private String getReplacementWithConfig(String data) {
-        for (ContentReplace c : configRules) {
+    private String getReplacementWithConfig(String data, List<ContentReplace> replaceRules) {
+        for (ContentReplace c : replaceRules) {
             data = c.applyReplacement(data);
         }
         return data;

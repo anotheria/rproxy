@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Get configuration from json file.
@@ -41,22 +43,30 @@ public class Configurer {
         return configuration;
     }
 
-    public static List<ContentReplace> getReplacementRules() {
+    public static Map<Integer, List<ContentReplace>> getReplacementRules() {
+        Map<Integer, List<ContentReplace>> map = new HashMap<>();
         if (instance == null || configuration == null || configuration.getContentReplacement() == null || configuration.getContentReplacement().isEmpty()) {
             return null;
         }
 
-        List<ContentReplace> rules = new LinkedList<>();
+
         for (String[] arr : configuration.getContentReplacement()) {
             switch (arr[2]) {
                 case "url":
                     String to = arr[0];
                     String with = arr[1];
-                    rules.add(new ContentReplaceRelative(to, with));
+                    ContentReplace conRep = new ContentReplaceRelative(to, with);
+                    //rules.add(new ContentReplaceRelative(to, with));
+                    int index = Integer.parseInt(arr[3]);
+                    if(map.get(index) == null){
+                        List<ContentReplace> l = new LinkedList<>();
+                        map.put(index, l);
+                    }
+                    map.get(index).add(conRep);
                     break;
             }
         }
-        return rules;
+        return map;
     }
 
     private ConfigurationEntity parseConfiguration(String fileName) {
