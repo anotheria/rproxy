@@ -37,7 +37,7 @@ public class ProxyFilter implements Filter {
 
     public void init(FilterConfig filterConfig) {
 
-        ConfigurationEntity conf = Configurer.parseConfigurationFile("conf.json");
+        ConfigurationEntity conf = Configurer.getJsonConfiguration();//Configurer.parseConfigurationFile("conf.json");
         cred = new HashMap<>();
         if (conf == null) {
             //parse from web.xml
@@ -72,7 +72,7 @@ public class ProxyFilter implements Filter {
             //System.out.println("Route : " + appUrl);
             //url = req.getRequestURL().toString();
             String top = getTopPath(appUrl);
-            if(top != null ){
+            if (top != null) {
                 currentSubFolder = "/" + top;
             }
 //            System.out.println(currentSubFolder);
@@ -117,7 +117,7 @@ public class ProxyFilter implements Filter {
                 response = getResponse(path, req, helpers.get(0));
             }
 
-            if(response != null) {
+            if (response != null) {
                 //handle return type, only write out on wrong return type.
                 res.setContentType(response.getContentType());
                 res.getOutputStream().write(response.getData());
@@ -212,8 +212,9 @@ public class ProxyFilter implements Filter {
             String data = new String(response.getData(), response.getContentEncoding());
             data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
             //relative hrefs replacing
-            data = data.replaceAll("href=\"/", "href=\"" + currentSubFolder + "/");
 
+
+            data = data.replaceAll("href=\"/", "href=\"" + currentSubFolder + "/");
 
             data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, currentSubFolder);
 
@@ -227,7 +228,7 @@ public class ProxyFilter implements Filter {
             data = data.replaceAll(p.getBaseLink(), p.getMeSubFolder());
 
 
-            if (index != -1 && configRules.get(index) != null) {
+            if (index != -1 && configRules != null && configRules.get(index) != null) {
                 data = getReplacementWithConfig(data, configRules.get(index));
             }
 
@@ -355,7 +356,7 @@ public class ProxyFilter implements Filter {
         //String hostProtocol = null;
         try {
             host = new URL(conf.getHostUrl());
-           // hostMe = host.getHost();
+            // hostMe = host.getHost();
             //hostProtocol = host.getProtocol() + "://";
         } catch (MalformedURLException e) {
             e.printStackTrace();

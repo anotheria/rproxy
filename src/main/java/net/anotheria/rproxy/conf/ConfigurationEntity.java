@@ -1,19 +1,29 @@
 package net.anotheria.rproxy.conf;
 
+import org.configureme.annotations.ConfigureMe;
+import org.configureme.annotations.SetIf;
+
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * ConfigurationEntity info from json file.
  */
+@ConfigureMe(allfields = true, name = "rproxy-config")
 public class ConfigurationEntity {
 
+    private static final String KEYWORD_REPLACEMENT = "replacement.";
     private String[] baseUrl;
     private String hostUrl;
     private String[] subDomainRules;
     private String[] topDomainRules;
     private List<String[]> contentReplacement;
     private Credentials[] credentials;
+
+    public ConfigurationEntity() {
+        contentReplacement = new LinkedList<>();
+    }
 
     public String[] getBaseUrl() {
         return baseUrl;
@@ -92,5 +102,11 @@ public class ConfigurationEntity {
         result = 31 * result + (contentReplacement != null ? contentReplacement.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(credentials);
         return result;
+    }
+
+    @SetIf(condition = SetIf.SetIfCondition.startsWith, value = KEYWORD_REPLACEMENT)
+    public void add(final String name, final String[] value) {
+        contentReplacement.add(value);
+       // System.out.println(Arrays.toString(value));
     }
 }

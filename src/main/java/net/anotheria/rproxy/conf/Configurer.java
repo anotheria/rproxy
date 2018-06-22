@@ -1,9 +1,8 @@
 package net.anotheria.rproxy.conf;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.configureme.ConfigurationManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,18 +29,18 @@ public class Configurer {
         return configuration;
     }
 
-    /**
-     * Force to parse document and update configuration for Configurer.class
-     *
-     * @param fileName path to the config file.
-     */
-    public static ConfigurationEntity parseConfigurationFile(String fileName) {
-        if (instance == null) {
-            instance = new Configurer();
-        }
-        configuration = instance.parseConfiguration(fileName);
-        return configuration;
-    }
+//    /**
+//     * Force to parse document and update configuration for Configurer.class
+//     *
+//     * @param fileName path to the config file.
+//     */
+//    public static ConfigurationEntity parseConfigurationFile(String fileName) {
+//        if (instance == null) {
+//            instance = new Configurer();
+//        }
+//        configuration = instance.parseConfiguration(fileName);
+//        return configuration;
+//    }
 
     public static Map<Integer, List<ContentReplace>> getReplacementRules() {
         Map<Integer, List<ContentReplace>> map = new HashMap<>();
@@ -69,19 +68,38 @@ public class Configurer {
         return map;
     }
 
-    private ConfigurationEntity parseConfiguration(String fileName) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        File file = getFile(fileName);
-        if (file == null) {
-            return null;
+    public static ConfigurationEntity getJsonConfiguration() {
+        if (instance == null) {
+            instance = new Configurer();
         }
-        try {
-            return objectMapper.readValue(file, ConfigurationEntity.class);
-        } catch (IOException e) {
+        configuration = instance.initiateConfigureMe();
+        return configuration;
+    }
+
+    private ConfigurationEntity initiateConfigureMe() {
+        ConfigurationEntity entity = new ConfigurationEntity();
+        try{
+            ConfigurationManager.INSTANCE.configure(entity);
+            return entity;
+        }catch (Exception e){
             e.printStackTrace();
             return null;
         }
     }
+
+//    private ConfigurationEntity parseConfiguration(String fileName) {
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            File file = getFile(fileName);
+//            if (file == null) {
+//                return null;
+//            }
+//            try {
+//                return objectMapper.readValue(file, ConfigurationEntity.class);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                return null;
+//            }
+//    }
 
     private File getFile(String fileName) {
         ClassLoader classLoader = getClass().getClassLoader();
