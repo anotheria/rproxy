@@ -1,8 +1,7 @@
 package net.anotheria.rproxy;
 
-import java.net.URL;
-
 /**
+ * TODO changes
  * Class represents data for requests.
  */
 public class ProxyHelper {

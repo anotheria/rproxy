@@ -1,6 +1,7 @@
 package net.anotheria.rproxy.getter;
 
 import net.anotheria.rproxy.conf.Credentials;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 /**
  * TODO comment this class
@@ -55,22 +57,24 @@ public class HttpGetter {
         httpClient = new DefaultHttpClient(cm);
     }
 
-
+    public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
+        return getUrlContent(req, null);
+    }
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req, Credentials cred) throws IOException {
         //System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
 
 
-        //List<HttpProxyHeader> hreq = req.getHeaders();
+//        List<HttpProxyHeader> hreq = req.getHeaders();
 //        for(HttpProxyHeader h : hreq){
-//           // System.out.println("Req..... " + h.getName() + " " + h.getValue());
+//            //System.out.println("Req..... " + h.getName() + " " + h.getValue());
 //        }
 
         HttpResponse response = getHttpResponse(req, cred);
 
-        //Header[] headers = response.getAllHeaders();
+//        Header[] headers = response.getAllHeaders();
 //        for(Header h : headers){
-//            //System.out.println("Response " + h.getName() + " : " + h.getValue());
+//           // System.out.println("Response " + h.getName() + " : " + h.getValue());
 //        }
 
 
