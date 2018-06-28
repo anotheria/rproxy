@@ -1,5 +1,7 @@
 package net.anotheria.rproxy.replacement;
 
+import java.util.Arrays;
+
 public class AttrParser {
     private AttrParser(){
 
@@ -33,8 +35,9 @@ public class AttrParser {
                 }
 
                 String[] linkArr = content.split(" ");
+                //System.out.println(Arrays.toString(linkArr));
                 for (String link : linkArr) {
-                    if (link.startsWith("/")) {
+                    if (link.startsWith("/") && !link.startsWith("/" + sub)) {
                         data = data.replaceAll(link, sub + link);
                     }
                 }

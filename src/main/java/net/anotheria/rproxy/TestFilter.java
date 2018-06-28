@@ -8,6 +8,8 @@ import net.anotheria.rproxy.refactor.ProxyConfig;
 import net.anotheria.rproxy.refactor.SiteConfig;
 import net.anotheria.rproxy.refactor.SiteHelper;
 import net.anotheria.rproxy.refactor.URLHelper;
+import net.anotheria.rproxy.refactor.cache.CacheStrategy;
+import net.anotheria.rproxy.refactor.cache.CachingPolicy;
 import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
 import net.anotheria.rproxy.refactor.cache.LRUStrategy;
 import net.anotheria.rproxy.replacement.AttrParser;
@@ -30,6 +32,10 @@ public class TestFilter implements Filter {
     private static Map<String, SiteConfig> siteConfigMap = new HashMap<>();
     private static Map<String, SiteHelper> siteHelperMap = new HashMap<>();
 
+    private static Map<String, Map<String, ICacheStrategy<String, HttpProxyResponse>>> test = new HashMap<>();
+
+    //private static Map<String, CachingPolicy> fileTypeCachingPolicyMap = new HashMap<>();
+
     //private static Map<String, HttpProxyResponse> testCache = new HashMap<>();
 
     private static ICacheStrategy<String, HttpProxyResponse> lruCache = new LRUStrategy<>(50);
@@ -47,6 +53,21 @@ public class TestFilter implements Filter {
             siteConfigMap.put(site, sc);
             SiteHelper siteHelper = new SiteHelper(new URLHelper(sc.getSourcePath()), new URLHelper(sc.getTargetPath()));
             siteHelperMap.put(site, siteHelper);
+
+            if (!test.containsKey(site)) {
+                Map<String, ICacheStrategy<String, HttpProxyResponse>> temp = new HashMap<>();
+                test.put(site, temp);
+            }
+
+            if (sc.getCachingPolicy() != null) {
+                for (CachingPolicy cachingPolicy : sc.getCachingPolicy()) {
+                    for (String fileType : cachingPolicy.getFileType()) {
+                        if (!test.get(site).containsKey(fileType)) {
+                            test.get(site).put(fileType, cachingPolicy.getCacheStrategy().getConcreteStrategy());
+                        }
+                    }
+                }
+            }
         }
 
         for (SiteConfig sc : siteConfigs)
@@ -59,99 +80,129 @@ public class TestFilter implements Filter {
 
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) {
         try {
-            if (!(servletRequest instanceof HttpServletRequest)) {
-                filterChain.doFilter(servletRequest, servletResponse);
-                return;
-            }
+//            if (!(servletRequest instanceof HttpServletRequest)) {
+//                filterChain.doFilter(servletRequest, servletResponse);
+//                return;
+//            }
+
+            //servletResponse.getOutputStream().flush();
 
             HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
             HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
             String requestURL = httpServletRequest.getRequestURL().toString();
 
             System.out.println("Request URL : " + requestURL);
-
-            //test lru cache
-            if (lruCache.get(requestURL) != null) {
-                System.out.println(requestURL + " ++++++ from cache!");
-                //if (httpProxyResponse != null) {
-
-                //test lru cache
-                prepareHttpServletResponseFromCache(httpServletResponse, lruCache.get(requestURL));
-                // }
-            } else {
             String key = URLUtils.getTopPath(requestURL);
-            if (key != null && siteConfigMap.get(key) != null) {
-                String targetPath = siteConfigMap.get(key).getTargetPath();
+            String[] ext = httpServletRequest.getPathInfo().split("\\.");
+            String fileExtension = "";
+            if (ext.length != 0) {
+                fileExtension = "." + ext[ext.length - 1];
+            }
+            //test lru cache for concrete site
+            if (siteConfigMap.containsKey(key)) {
+                if (test.get(key).keySet().contains(fileExtension) && test.get(key).get(fileExtension).get(requestURL) != null) {
+                    System.out.println(requestURL + " ++++++ from cache!");
+                    prepareHttpServletResponseFromCache(httpServletResponse, test.get(key).get(fileExtension).get(requestURL));
+                } else {
+                    String targetPath = siteConfigMap.get(key).getTargetPath();
+                    String path = httpServletRequest.getPathInfo().replaceAll("/" + key, "");
 
-                //request path should be cached
-                String path = httpServletRequest.getPathInfo().replaceAll("/" + key, "");
-                // path = httpServletRequest.getpa
+                    System.out.println("request path " + httpServletRequest.getPathInfo());
+                    String queryString = httpServletRequest.getQueryString();
+
+                    targetPath = prepareTargetPath(targetPath, path, queryString);
+                    System.out.println("Redirect URL : " + targetPath);
+                    HttpProxyRequest httpProxyRequest = new HttpProxyRequest(targetPath);
+                    //now we need to change headers for httpProxyRequest
+                    prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, key);
 
 
-                System.out.println("request path " + httpServletRequest.getPathInfo());
-                String queryString = httpServletRequest.getQueryString();
+                    System.out.println(requestURL + " ----- loaded!");
+                    HttpProxyResponse httpProxyResponse = HttpGetter.getUrlContent(httpProxyRequest);
 
-                targetPath = prepareTargetPath(targetPath, path, queryString);
-                System.out.println("Redirect URL : " + targetPath);
-                HttpProxyRequest httpProxyRequest = new HttpProxyRequest(targetPath);
-                //now we need to change headers for httpProxyRequest
-                prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, key);
+                    if (httpProxyResponse != null) {
+                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, key);
+                    }
+                    //lruCache.add(requestURL, httpProxyResponse);
 
-//                if (testCache.containsKey(requestURL) && testCache.get(requestURL) != null) {
-//                    System.out.println(requestURL + " ++++++ from cache!");
-//                    //if (httpProxyResponse != null) {
-//                    prepareHttpServletResponseFromCache(httpServletResponse, testCache.get(requestURL));
-//                    // }
-//                } else {
+
+                    System.out.println("File extension : " + fileExtension);
+                    //System.out.println(test.keySet());
+                    // System.out.println(test.get(key).keySet());
+                    //System.out.println(test.get(key).get(fileExtension));
+                    if (test.get(key).containsKey(fileExtension)) {
+                        test.get(key).get(fileExtension).add(requestURL, httpProxyResponse);
+                        System.out.println(fileExtension + " ->>>>>>>>> add to cache! " + requestURL);
+                    }
+                }
+
+            }
+
+//            if (lruCache.get(requestURL) != null) {
+//                System.out.println(requestURL + " ++++++ from cache!");
+//                //if (httpProxyResponse != null) {
+//
+//                //test lru cache
+//                prepareHttpServletResponseFromCache(httpServletResponse, lruCache.get(requestURL));
+//                // }
+//            } else {
+//
+//                if (key != null && siteConfigMap.get(key) != null) {
+//                    String targetPath = siteConfigMap.get(key).getTargetPath();
+//
+//                    //request path should be cached
+//                    String path = httpServletRequest.getPathInfo().replaceAll("/" + key, "");
+//                    // path = httpServletRequest.getpa
+//
+//
+//                    System.out.println("request path " + httpServletRequest.getPathInfo());
+//                    String queryString = httpServletRequest.getQueryString();
+//
+//                    targetPath = prepareTargetPath(targetPath, path, queryString);
+//                    System.out.println("Redirect URL : " + targetPath);
+//                    HttpProxyRequest httpProxyRequest = new HttpProxyRequest(targetPath);
+//                    //now we need to change headers for httpProxyRequest
+//                    prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, key);
+//
+//
 //                    System.out.println(requestURL + " ----- new!");
 //                    HttpProxyResponse httpProxyResponse = HttpGetter.getUrlContent(httpProxyRequest);
 //
 //                    if (httpProxyResponse != null) {
 //                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, key);
 //                    }
-//                    testCache.put(requestURL, httpProxyResponse);
+//                    lruCache.add(requestURL, httpProxyResponse);
 //                }
-
-
-                    System.out.println(requestURL + " ----- new!");
-                    HttpProxyResponse httpProxyResponse = HttpGetter.getUrlContent(httpProxyRequest);
-
-                    if (httpProxyResponse != null) {
-                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, key);
-                    }
-                    lruCache.add(requestURL, httpProxyResponse);
-                }
-
-
-            }
-        } catch (ServletException | IOException e) {
+//
+//
+//            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void prepareHttpServletResponseFromCache(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
-        try {
-            doo(httpServletResponse, httpProxyResponse);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        doo(httpServletResponse, httpProxyResponse);
     }
 
     private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key) {
+        prepareProxyResponse(httpProxyResponse, key);
+        doo(httpServletResponse, httpProxyResponse);
+    }
+
+    private void doo(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
+        //if (httpProxyResponse.getContentType() != null) {
+        //System.out.println(httpProxyResponse.getContentType());
+
+        //httpServletResponse.setCharacterEncoding(httpProxyResponse.getContentEncoding());
+        //}
         try {
-            prepareProxyResponse(httpProxyResponse, key);
-            doo(httpServletResponse, httpProxyResponse);
+            httpServletResponse.setContentType(httpProxyResponse.getContentType());
+            httpServletResponse.getOutputStream().write(httpProxyResponse.getData());
+            httpServletResponse.getOutputStream().flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void doo(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) throws IOException {
-        //if (httpProxyResponse.getContentType() != null) {
-            httpServletResponse.setContentType(httpProxyResponse.getContentType());
-        //}
-        httpServletResponse.getOutputStream().write(httpProxyResponse.getData());
-        httpServletResponse.getOutputStream().flush();
     }
 
     private String prepareTargetPath(String targetPath, String path, String queryString) {
@@ -165,9 +216,10 @@ public class TestFilter implements Filter {
     private void prepareProxyResponse(HttpProxyResponse httpProxyResponse, String siteKey) {
         try {
             if (httpProxyResponse.isHtml()) {
+
                 SiteHelper siteHelper = siteHelperMap.get(siteKey);
 
-                System.out.println(siteHelper);
+                //System.out.println(siteHelper);
 
                 String data = new String(httpProxyResponse.getData(), httpProxyResponse.getContentEncoding());
 
@@ -178,6 +230,8 @@ public class TestFilter implements Filter {
                 data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
 
                 data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
+
+                //data = data.replaceAll("src=\"/" + siteKey + "/" + siteKey, "src=\"" + "/" + siteKey);
 
                 httpProxyResponse.setData(URLReplacementUtil.replace(
                         httpProxyResponse.getData(),

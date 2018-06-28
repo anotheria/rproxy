@@ -1,5 +1,6 @@
 package net.anotheria.rproxy.refactor;
 
+import net.anotheria.rproxy.refactor.cache.CachingPolicy;
 import org.configureme.annotations.ConfigureMe;
 
 import java.util.Arrays;
@@ -10,6 +11,7 @@ public class SiteConfig {
     private String sourcePath;
     private String targetPath;
     private RewriteRule[] rewriteRules;
+    private CachingPolicy[] cachingPolicy;
 
     public SiteConfig(String sourcePath, String targetPath) {
         this.sourcePath = sourcePath;
@@ -43,12 +45,21 @@ public class SiteConfig {
         this.rewriteRules = rewriteRules;
     }
 
+    public CachingPolicy[] getCachingPolicy() {
+        return cachingPolicy;
+    }
+
+    public void setCachingPolicy(CachingPolicy[] cachingPolicy) {
+        this.cachingPolicy = cachingPolicy;
+    }
+
     @Override
     public String toString() {
         return "SiteConfig{" +
                 "sourcePath='" + sourcePath + '\'' +
                 ", targetPath='" + targetPath + '\'' +
                 ", rewriteRules=" + Arrays.toString(rewriteRules) +
+                ", cachingPolicy=" + Arrays.toString(cachingPolicy) +
                 '}';
     }
 }

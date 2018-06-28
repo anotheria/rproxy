@@ -1,4 +1,18 @@
 {
-  "sourcePath" : "http://localhost:8080/test",
-  "targetPath" : "http://faq.thecasuallounge.ch"
+  "sourcePath": "http://localhost:8080/test",
+  "targetPath": "http://faq.thecasuallounge.ch",
+  "@cachingPolicy": [
+    {
+      "fileType": [
+        ".css",
+        ".js",
+        ".jpg",
+        ".png"
+      ],
+      "@cacheStrategy": {
+        "name": "LRU",
+        "configName": "LRUConf1"
+      }
+    }
+  ]
 }

@@ -60,29 +60,38 @@ public class HttpGetter {
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
         return getUrlContent(req, null);
     }
+
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req, Credentials cred) throws IOException {
         //System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
 
 
-//        List<HttpProxyHeader> hreq = req.getHeaders();
-//        for(HttpProxyHeader h : hreq){
-//            //System.out.println("Req..... " + h.getName() + " " + h.getValue());
-//        }
-
+        List<HttpProxyHeader> hreq = req.getHeaders();
+        for (HttpProxyHeader h : hreq) {
+            System.out.println("Req..... " + h.getName() + " " + h.getValue());
+        }
         HttpResponse response = getHttpResponse(req, cred);
 
-//        Header[] headers = response.getAllHeaders();
-//        for(Header h : headers){
-//           // System.out.println("Response " + h.getName() + " : " + h.getValue());
-//        }
+        Header[] headers = response.getAllHeaders();
+        for (Header h : headers) {
+            System.out.println("Response " + h.getName() + " : " + h.getValue());
+        }
 
 
         HttpProxyResponse ret = new HttpProxyResponse();
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
+        ret.getContentType();
         final HttpEntity entity = response.getEntity();
-        if(entity != null && entity.getContentType() != null) {
+
+        System.out.println("=============");
+        System.out.println(req.getUrl());
+        System.out.println(entity.getContentEncoding());
+        System.out.println(entity.getContentType());
+        System.out.println("=============");
+
+
+        if (entity != null && entity.getContentType() != null) {
             ret.setContentType(entity.getContentType().getValue());
         }
 
@@ -103,12 +112,14 @@ public class HttpGetter {
     public static HttpResponse getHttpResponse(HttpProxyRequest req, Credentials credentials) throws IOException {
         HttpGet request = new HttpGet(req.getUrl());
 
+
+        System.out.println("is it broken? " + req.getUrl());
         for (HttpProxyHeader header : req.getHeaders()) {
             request.addHeader(header.getName(), header.getValue());
-            //System.out.println(header.getName() + " ++++++ " + header.getValue());
+            //request.addHeader("accept", "image/*"); System.out.println(header.getName() + " ++++++ " + header.getValue());
         }
         HttpClient client;
-        if(credentials != null){
+        if (credentials != null) {
             //System.out.println("Using credentials : " + credentials.toString());
             UsernamePasswordCredentials cred = new UsernamePasswordCredentials(credentials.getUserName(), credentials.getPassword());
             CredentialsProvider provider = new BasicCredentialsProvider();
@@ -116,7 +127,7 @@ public class HttpGetter {
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
             provider.setCredentials(authScope, cred);
             client = HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
-        }else{
+        } else {
             client = HttpClientBuilder.create().build();
         }
 

@@ -1,10 +1,16 @@
 package net.anotheria.rproxy.refactor.cache;
 
+import org.configureme.ConfigurationManager;
+import org.configureme.annotations.ConfigureMe;
+
+import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
+
+    private static final int DEFAULT_SIZE = 100;
 
     private Map<K, Entry<K, V>> map = new HashMap<>();
     private int size;
@@ -13,6 +19,10 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
 
     public LRUStrategy(int size) {
         this.size = size;
+    }
+
+    public LRUStrategy() {
+       size = DEFAULT_SIZE;
     }
 
     @Override
@@ -165,5 +175,13 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
             }
             e = e.right;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "LRUStrategy{" +
+                "map=" + map +
+                ", size=" + size +
+                '}';
     }
 }
