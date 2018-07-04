@@ -40,7 +40,7 @@ public class ProxyFilter implements Filter {
 
     public void init(FilterConfig filterConfig) {
 
-        ConfigurationEntity conf = Configurer.getJsonConfiguration();//Configurer.parseConfigurationFile("conf.json");
+        ConfigurationEntity conf = Configurer.getJsonConfiguration();//CacheConfigurer.parseConfigurationFile("conf.json");
         cred = new HashMap<>();
         if (conf == null) {
             //parse from web.xml
@@ -204,7 +204,7 @@ public class ProxyFilter implements Filter {
         HttpProxyResponse response;
         int index = helpers.indexOf(p) + 1;
         if (index == -1 || cred.get(index) == null) {
-            response = HttpGetter.getUrlContent(proxyRequest, null);
+            response = HttpGetter.getUrlContent(proxyRequest);
         } else {
             response = HttpGetter.getUrlContent(proxyRequest, cred.get(index));
         }

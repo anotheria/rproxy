@@ -8,6 +8,11 @@ import java.net.URL;
  */
 public final class URLUtils {
 
+    /**
+     * TODO remove duplicate code in ProxyFilter.class
+     * @param url
+     * @return
+     */
     public static String getTopPath(String url) {
         if (url == null) {
             return null;

@@ -1,6 +1,7 @@
 package net.anotheria.rproxy.getter;
 
 import net.anotheria.rproxy.conf.Credentials;
+import net.anotheria.rproxy.refactor.SiteCredentials;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -58,23 +60,33 @@ public class HttpGetter {
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
-        return getUrlContent(req, null);
+        return getURL(req, null);
+    }
+
+    public static HttpProxyResponse getUrlContent(HttpProxyRequest req, SiteCredentials cred) throws IOException {
+        UsernamePasswordCredentials c = new UsernamePasswordCredentials(cred.getUserName(), cred.getPassword());
+        return getURL(req, c);
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req, Credentials cred) throws IOException {
+        UsernamePasswordCredentials c = new UsernamePasswordCredentials(cred.getUserName(), cred.getPassword());
+        return getURL(req, c);
+    }
+
+    public static HttpProxyResponse getURL(HttpProxyRequest req, UsernamePasswordCredentials cred) throws IOException {
         //System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
 
 
         List<HttpProxyHeader> hreq = req.getHeaders();
         for (HttpProxyHeader h : hreq) {
-            System.out.println("Req..... " + h.getName() + " " + h.getValue());
+            //System.out.println("Req..... " + h.getName() + " " + h.getValue());
         }
         HttpResponse response = getHttpResponse(req, cred);
 
         Header[] headers = response.getAllHeaders();
         for (Header h : headers) {
-            System.out.println("Response " + h.getName() + " : " + h.getValue());
+           // System.out.println("Response " + h.getName() + " : " + h.getValue());
         }
 
 
@@ -83,13 +95,6 @@ public class HttpGetter {
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
         ret.getContentType();
         final HttpEntity entity = response.getEntity();
-
-        System.out.println("=============");
-        System.out.println(req.getUrl());
-        System.out.println(entity.getContentEncoding());
-        System.out.println(entity.getContentType());
-        System.out.println("=============");
-
 
         if (entity != null && entity.getContentType() != null) {
             ret.setContentType(entity.getContentType().getValue());
@@ -109,11 +114,9 @@ public class HttpGetter {
         return ret;
     }
 
-    public static HttpResponse getHttpResponse(HttpProxyRequest req, Credentials credentials) throws IOException {
+    public static HttpResponse getHttpResponse(HttpProxyRequest req, UsernamePasswordCredentials credentials) throws IOException {
         HttpGet request = new HttpGet(req.getUrl());
 
-
-        System.out.println("is it broken? " + req.getUrl());
         for (HttpProxyHeader header : req.getHeaders()) {
             request.addHeader(header.getName(), header.getValue());
             //request.addHeader("accept", "image/*"); System.out.println(header.getName() + " ++++++ " + header.getValue());
@@ -121,11 +124,10 @@ public class HttpGetter {
         HttpClient client;
         if (credentials != null) {
             //System.out.println("Using credentials : " + credentials.toString());
-            UsernamePasswordCredentials cred = new UsernamePasswordCredentials(credentials.getUserName(), credentials.getPassword());
             CredentialsProvider provider = new BasicCredentialsProvider();
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
-            provider.setCredentials(authScope, cred);
+            provider.setCredentials(authScope, credentials);
             client = HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
         } else {
             client = HttpClientBuilder.create().build();

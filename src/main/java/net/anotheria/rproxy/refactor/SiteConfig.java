@@ -5,18 +5,29 @@ import org.configureme.annotations.ConfigureMe;
 
 import java.util.Arrays;
 
+/**
+ * Site Configuration class.
+ */
 @ConfigureMe(allfields = true)
 public class SiteConfig {
 
+    /**
+     * URL of our host.
+     */
     private String sourcePath;
+    /**
+     * URL of resource to take content from.
+     */
     private String targetPath;
     private RewriteRule[] rewriteRules;
-    private CachingPolicy[] cachingPolicy;
-
-    public SiteConfig(String sourcePath, String targetPath) {
-        this.sourcePath = sourcePath;
-        this.targetPath = targetPath;
-    }
+    /**
+     * Caching policy for this site.
+     */
+    private CachingPolicy cachingPolicy;
+    /**
+     * Credentials for for this site.
+     */
+    private SiteCredentials siteCredentials;
 
     public SiteConfig() {
     }
@@ -45,12 +56,20 @@ public class SiteConfig {
         this.rewriteRules = rewriteRules;
     }
 
-    public CachingPolicy[] getCachingPolicy() {
+    public CachingPolicy getCachingPolicy() {
         return cachingPolicy;
     }
 
-    public void setCachingPolicy(CachingPolicy[] cachingPolicy) {
+    public void setCachingPolicy(CachingPolicy cachingPolicy) {
         this.cachingPolicy = cachingPolicy;
+    }
+
+    public SiteCredentials getSiteCredentials() {
+        return siteCredentials;
+    }
+
+    public void setSiteCredentials(SiteCredentials siteCredentials) {
+        this.siteCredentials = siteCredentials;
     }
 
     @Override
@@ -59,7 +78,7 @@ public class SiteConfig {
                 "sourcePath='" + sourcePath + '\'' +
                 ", targetPath='" + targetPath + '\'' +
                 ", rewriteRules=" + Arrays.toString(rewriteRules) +
-                ", cachingPolicy=" + Arrays.toString(cachingPolicy) +
+                ", cachingPolicy=" + cachingPolicy +
                 '}';
     }
 }

@@ -30,13 +30,13 @@ public class Configurer {
     }
 
 //    /**
-//     * Force to parse document and update configuration for Configurer.class
+//     * Force to parse document and update configuration for CacheConfigurer.class
 //     *
 //     * @param fileName path to the config file.
 //     */
 //    public static ConfigurationEntity parseConfigurationFile(String fileName) {
 //        if (instance == null) {
-//            instance = new Configurer();
+//            instance = new CacheConfigurer();
 //        }
 //        configuration = instance.parseConfiguration(fileName);
 //        return configuration;

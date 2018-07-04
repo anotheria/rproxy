@@ -2,6 +2,11 @@ package net.anotheria.rproxy.refactor.cache;
 
 import java.util.LinkedHashMap;
 
+/**
+ * TODO comment, implement
+ * @param <K>
+ * @param <V>
+ */
 public class ForeverStrategy<K, V> implements ICacheStrategy<K, V> {
     @Override
     public void add(K key, V value) {

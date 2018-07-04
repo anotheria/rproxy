@@ -3,7 +3,9 @@ package net.anotheria.rproxy.refactor.cache;
 import java.util.LinkedHashMap;
 
 /**
- * Cache Strategy interface.
+ * Cache strategy interface.
+ * @param <K> type of Key
+ * @param <V> type of Value
  */
 public interface ICacheStrategy<K, V> {
 

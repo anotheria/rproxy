@@ -1,13 +1,15 @@
 package net.anotheria.rproxy.refactor.cache;
 
-import org.configureme.ConfigurationManager;
-import org.configureme.annotations.ConfigureMe;
-
-import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * LRU algorithm implementation.
+ *
+ * @param <K> type of Key
+ * @param <V> type of Value to store
+ */
 public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
 
     private static final int DEFAULT_SIZE = 100;
@@ -17,12 +19,21 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
     private Entry start;
     private Entry end;
 
+    /**
+     * Constructor to create new instance of LRU with special size.
+     *
+     * @param size i.e. max number of elements stored in cache before last element will be pushed out
+     *             from it when add a new one.
+     */
     public LRUStrategy(int size) {
         this.size = size;
     }
 
+    /**
+     * Constructor to create new instance of LRU with default size (100).
+     */
     public LRUStrategy() {
-       size = DEFAULT_SIZE;
+        size = DEFAULT_SIZE;
     }
 
     @Override
@@ -41,7 +52,7 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
             //System.out.println(e);
         }
 
-        if(map.size() > size){
+        if (map.size() > size) {
             map.remove(end.key);
             removeLast();
         }
@@ -69,13 +80,13 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
 
     @Override
     public LinkedHashMap<K, V> getAllElements() {
-        if(start == null){
+        if (start == null) {
             return null;
         }
         LinkedHashMap<K, V> elements = new LinkedHashMap<>();
         Entry<K, V> e = start;
         elements.put(e.key, e.value);
-        while(hasNext(e)){
+        while (hasNext(e)) {
             e = e.right;
             elements.put(e.key, e.value);
         }
@@ -90,6 +101,7 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
 
     /**
      * Add node to start. Set neighbors.
+     *
      * @param node
      */
     private void addToStart(Entry node) {
@@ -97,7 +109,7 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
             start.left = node;
             node.right = start;
         }
-        if(end == null){
+        if (end == null) {
             end = node;
         }
         node.left = null;
@@ -155,11 +167,12 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
 
     /**
      * Check if Entry has a neighbor next to it.
+     *
      * @param node
      * @return true if right != null, otherwise false
      */
     private boolean hasNext(Entry<K, V> node) {
-        if (node.right != null) {
+        if (node != null && node.right != null) {
             return true;
         }
         return false;

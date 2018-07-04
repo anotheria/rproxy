@@ -4,10 +4,20 @@ import org.configureme.annotations.ConfigureMe;
 
 import java.util.Arrays;
 
+/**
+ * Caching policy for site.
+ */
 @ConfigureMe(allfields = true)
 public class CachingPolicy {
+    /**
+     * Array of file extensions.
+     * <p>[".js", ".png"]</p>
+     */
     private String[] fileType;
     private CacheStorage cacheStorage;
+    /**
+     * Strategy for caching.
+     */
     private CacheStrategy cacheStrategy;
 
     public String[] getFileType() {

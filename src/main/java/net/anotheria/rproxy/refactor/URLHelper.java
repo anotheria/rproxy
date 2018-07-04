@@ -5,6 +5,9 @@ import net.anotheria.rproxy.utils.URLUtils;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * Class helps to split URL to parts.
+ */
 public class URLHelper {
     private String host;
     private int port;

@@ -1,6 +1,8 @@
 package net.anotheria.rproxy.refactor;
 
-
+/**
+ * Wrapper for site config source and target URLs.
+ */
 public class SiteHelper {
     private URLHelper sourceUrlHelper;
     private URLHelper targetUrlHelper;
