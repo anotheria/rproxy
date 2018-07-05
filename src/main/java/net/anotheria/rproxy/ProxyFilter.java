@@ -7,6 +7,8 @@ import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
 import net.anotheria.rproxy.refactor.ProxyConfig;
 import net.anotheria.rproxy.refactor.SiteConfig;
+import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
+import net.anotheria.rproxy.refactor.cache.LRUStrategy;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
@@ -29,7 +31,6 @@ public class ProxyFilter implements Filter {
     private static String url;
     private static String currentSubFolder;
 
-    //private static List<ContentReplace> configRules = getConfigRulesFromXml();
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFilter.class);
 
@@ -37,6 +38,8 @@ public class ProxyFilter implements Filter {
     private List<ProxyHelper> helpers;
     private Map<Integer, List<ContentReplace>> configRules;
     private Map<Integer, Credentials> cred;
+
+    private static ICacheStrategy<String, HttpProxyResponse> cache = new LRUStrategy<>(150);
 
     public void init(FilterConfig filterConfig) {
 
@@ -87,40 +90,47 @@ public class ProxyFilter implements Filter {
                 return;
             }
 
-            URL u = new URL(appUrl);
-
-            String topPath = getTopPath(appUrl);
-            String topDomain = getTopDomain(u.getHost());
             HttpProxyResponse response = null;
 
-            if (defaultRules != null) {
-                //if top path is present
-                //System.out.println("defRules != null");
-                for (Rule defRule : defaultRules) {
-                    //search rule where subdom equals to current request top path
-                    if (defRule.getSubDomain().equals(topPath)) {
-                        //found rule! now check if it has top domain subrules
-                        if (!defRule.getTopDomainList().isEmpty()) {
-                            //it has subrules, search for current url topdomain rule
-                            for (RuleTopDomain topDomRule : defRule.getTopDomainList()) {
-                                //if found - do request for current rule, otherwise do without subrule
-                                if (topDomRule.getTopDomain().equals(topDomain)) {
-                                    response = getResponse(path, req, topDomRule.getProxyHelper());
-                                    break;
+            if(cache.get(appUrl) != null){
+                response = cache.get(appUrl);
+            }else {
+
+                URL u = new URL(appUrl);
+
+                String topPath = getTopPath(appUrl);
+                String topDomain = getTopDomain(u.getHost());
+
+                if (defaultRules != null) {
+                    //if top path is present
+                    //System.out.println("defRules != null");
+                    for (Rule defRule : defaultRules) {
+                        //search rule where subdom equals to current request top path
+                        if (defRule.getSubDomain().equals(topPath)) {
+                            //found rule! now check if it has top domain subrules
+                            if (!defRule.getTopDomainList().isEmpty()) {
+                                //it has subrules, search for current url topdomain rule
+                                for (RuleTopDomain topDomRule : defRule.getTopDomainList()) {
+                                    //if found - do request for current rule, otherwise do without subrule
+                                    if (topDomRule.getTopDomain().equals(topDomain)) {
+                                        response = getResponse(path, req, topDomRule.getProxyHelper());
+                                        break;
+                                    }
+                                    response = getResponse(path, req, defRule.getProxyHelperDefault());
                                 }
+                            } else {
                                 response = getResponse(path, req, defRule.getProxyHelperDefault());
+                                break;
                             }
-                        } else {
-                            response = getResponse(path, req, defRule.getProxyHelperDefault());
-                            break;
                         }
                     }
+
+                } else {
+                    response = getResponse(path, req, helpers.get(0));
                 }
 
-            } else {
-                response = getResponse(path, req, helpers.get(0));
+                cache.add(appUrl, response);
             }
-
             if (response != null) {
                 //handle return type, only write out on wrong return type.
                 res.setContentType(response.getContentType());
@@ -187,7 +197,12 @@ public class ProxyFilter implements Filter {
         if (queryString != null && queryString.length() > 0)
             pathToGet += "?" + queryString;
 
-        HttpProxyRequest proxyRequest = new HttpProxyRequest(p.getBaseLink() + pathToGet);
+        String proxyRequestURL;
+        if(true){
+            proxyRequestURL = p.getBaseLink() + pathToGet;
+            System.out.println(proxyRequestURL);
+        }
+        HttpProxyRequest proxyRequest = new HttpProxyRequest(proxyRequestURL);
         Enumeration<String> headerNames = req.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
@@ -197,6 +212,10 @@ public class ProxyFilter implements Filter {
             }
             if (hName.equals("host")) {
                 hValue = p.getHostBase();
+            }
+            if(hName.equals("origin")){
+                //hValue = hValue.replaceAll("http", "https");
+                System.out.println(hName + " -> " + hValue);
             }
             proxyRequest.addHeader(hName, hValue);
 

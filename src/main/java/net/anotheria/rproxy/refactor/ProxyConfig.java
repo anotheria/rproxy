@@ -1,8 +1,9 @@
 package net.anotheria.rproxy.refactor;
 
+import net.anotheria.rproxy.refactor.cache.CacheStorage;
 import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
 import net.anotheria.rproxy.refactor.conf.CacheConfigurer;
-import net.anotheria.rproxy.refactor.conf.CacheStrategyConfigurer;
+import net.anotheria.rproxy.refactor.conf.CacheStrategyConfigConfigurer;
 import net.anotheria.rproxy.refactor.conf.IConfig;
 import org.configureme.ConfigurationManager;
 import org.configureme.annotations.AfterConfiguration;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class ProxyConfig<K, V> {
 
     private String[] sites;
+    private CacheStorage[] cacheStorages;
 
     //---------
     /**
@@ -38,10 +40,16 @@ public class ProxyConfig<K, V> {
      */
     private Map<String, Map<String, ICacheStrategy<K, V>>> cache;
 
+    /**
+     * Storage map. Key - alias, Value - reference to storage.
+     */
+    private Map<String, CacheStorage> storageMap;
+
     public ProxyConfig() {
         siteConfigMap = new HashMap<>();
         siteHelperMap = new HashMap<>();
         cache = new HashMap<>();
+        storageMap = new HashMap<>();
     }
 
     public String[] getSites() {
@@ -76,6 +84,22 @@ public class ProxyConfig<K, V> {
         this.cache = cache;
     }
 
+    public CacheStorage[] getCacheStorages() {
+        return cacheStorages;
+    }
+
+    public void setCacheStorages(CacheStorage[] cacheStorages) {
+        this.cacheStorages = cacheStorages;
+    }
+
+    public Map<String, CacheStorage> getStorageMap() {
+        return storageMap;
+    }
+
+    public void setStorageMap(Map<String, CacheStorage> storageMap) {
+        this.storageMap = storageMap;
+    }
+
     /**
      * This method initialises {@link ProxyConfig#siteConfigMap}, {@link ProxyConfig#siteHelperMap} and
      * {@link ProxyConfig#cache}. Also fills {@link ProxyConfig#siteConfigMap} and
@@ -84,6 +108,9 @@ public class ProxyConfig<K, V> {
      */
     @AfterConfiguration
     public void initializeConfiguration() {
+        for(CacheStorage storage : cacheStorages){
+            storageMap.put(storage.getAlias(), storage);
+        }
         for (String site : sites) {
             SiteConfig sc = new SiteConfig();
             ConfigurationManager.INSTANCE.configureAs(sc, site);
@@ -93,15 +120,32 @@ public class ProxyConfig<K, V> {
             siteHelperMap.put(site, siteHelper);
 
             if (sc.getCachingPolicy() != null && sc.getCachingPolicy().getCacheStrategy() != null) {
-                IConfig curConfig = CacheStrategyConfigurer.getByStrategyEnumAndConfigName(sc.getCachingPolicy().getCacheStrategy().getName(), sc.getCachingPolicy().getCacheStrategy().getConfigName());
+                IConfig curConfig = CacheStrategyConfigConfigurer.getByStrategyEnumAndConfigName(sc.getCachingPolicy().getCacheStrategy().getName(), sc.getCachingPolicy().getCacheStrategy().getConfigName());
                 if (curConfig != null) {
                     if (cache.get(site) == null) {
                         Map<String, ICacheStrategy<K, V>> tmp = new HashMap<>();
                         cache.put(site, tmp);
                     }
-                    ICacheStrategy<K, V> cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
-                    for (String fileType : sc.getCachingPolicy().getFileType()) {
-                        cache.get(site).put(fileType, cacheInstance);
+                    ICacheStrategy<K, V> cacheInstance;
+                    switch (sc.getCachingPolicy().getCacheStrategy().getName()) {
+                        case LRU:
+                            cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
+                            for (String fileType : sc.getCachingPolicy().getFileType()) {
+                                cache.get(site).put(fileType, cacheInstance);
+                            }
+                            break;
+                        case PERMANENT:
+                            cacheInstance = new CacheConfigurer<K, V>().configurePermanent(storageMap.get(sc.getAlias()).getFolder());
+                            for (String fileType : sc.getCachingPolicy().getFileType()) {
+                                cache.get(site).put(fileType, cacheInstance);
+                            }
+                            break;
+                        case AUTOEXPIRY:
+                            cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
+                            for (String fileType : sc.getCachingPolicy().getFileType()) {
+                                cache.get(site).put(fileType, cacheInstance);
+                            }
+                            break;
                     }
                 }
             }

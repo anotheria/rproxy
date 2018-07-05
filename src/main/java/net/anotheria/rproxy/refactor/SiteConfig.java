@@ -29,6 +29,16 @@ public class SiteConfig {
      */
     private SiteCredentials siteCredentials;
 
+    private String alias;
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
     public SiteConfig() {
     }
 

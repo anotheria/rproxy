@@ -1,6 +1,8 @@
 package net.anotheria.rproxy.refactor.conf;
 
+import net.anotheria.rproxy.refactor.cache.AutoExpiryStrategy;
 import net.anotheria.rproxy.refactor.cache.LRUStrategy;
+import net.anotheria.rproxy.refactor.cache.PermanentStrategy;
 
 /**
  * Class for creation and configuration instances of Cache Strategies.
@@ -19,6 +21,21 @@ public class CacheConfigurer<K, V> {
     public LRUStrategy<K, V> configureLRU(IConfig config) {
         LRUConfig c = (LRUConfig) config;
         return new LRUStrategy<>(c.getSize());
+    }
+
+    public PermanentStrategy<K, V> configurePermanent(IConfig config) {
+        PermanentConfig c = (PermanentConfig) config;
+        return new PermanentStrategy<>(c);
+    }
+
+    public PermanentStrategy<K, V> configurePermanent(String path) {
+        //PermanentConfig c = (PermanentConfig) config;
+        return new PermanentStrategy<>(path);
+    }
+
+    public AutoExpiryStrategy<K, V> configureAutoExpiry(IConfig config) {
+        AutoExpiryConfig c = (AutoExpiryConfig) config;
+        return new AutoExpiryStrategy<>(c);
     }
 
 }

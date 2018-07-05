@@ -1,13 +1,20 @@
 package net.anotheria.rproxy.refactor.cache;
 
+import net.anotheria.rproxy.refactor.conf.AutoExpiryConfig;
+
 import java.util.LinkedHashMap;
 
 /**
  * TODO comment, implement
+ *
  * @param <K>
  * @param <V>
  */
 public class AutoExpiryStrategy<K, V> implements ICacheStrategy<K, V> {
+
+    public AutoExpiryStrategy(AutoExpiryConfig c) {
+    }
+
     @Override
     public void add(K key, V value) {
 

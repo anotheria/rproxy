@@ -1,12 +1,15 @@
 package net.anotheria.rproxy.getter;
 
+import java.io.Serializable;
+import java.util.Arrays;
+
 /**
  * TODO comment this class
  *
  * @author lrosenberg
  * @since 04.06.18 10:41
  */
-public class HttpProxyResponse {
+public class HttpProxyResponse implements Serializable {
 	private byte[] data;
 	private int statusCode;
 	private String statusMessage;
@@ -69,4 +72,14 @@ public class HttpProxyResponse {
 		return contentEncoding;
 	}
 
+	@Override
+	public String toString() {
+		return "HttpProxyResponse{" +
+				"data=" + Arrays.toString(data) +
+				", statusCode=" + statusCode +
+				", statusMessage='" + statusMessage + '\'' +
+				", contentType='" + contentType + '\'' +
+				", contentEncoding='" + contentEncoding + '\'' +
+				'}';
+	}
 }

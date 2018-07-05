@@ -86,7 +86,7 @@ public class HttpGetter {
 
         Header[] headers = response.getAllHeaders();
         for (Header h : headers) {
-           // System.out.println("Response " + h.getName() + " : " + h.getValue());
+            //System.out.println("Response " + h.getName() + " : " + h.getValue());
         }
 
 

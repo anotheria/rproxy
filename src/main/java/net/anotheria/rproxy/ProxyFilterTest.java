@@ -20,7 +20,7 @@ import java.util.Enumeration;
 import java.util.Map;
 
 @Monitor
-public class TestFilter implements Filter {
+public class ProxyFilterTest implements Filter {
 
     private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
 
@@ -70,6 +70,11 @@ public class TestFilter implements Filter {
 
                     if (httpProxyResponse != null) {
                         prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName);
+
+                        System.out.println(requestURL + " ->" + httpProxyResponse.getStatusCode());
+//                        for(httpProxyResponse.ge){
+//                            System.out.println();
+//                        }
                         proxy.addToCache(requestURL, httpProxyResponse, siteName, fileExtension);
                         System.out.println(fileExtension + " ->>>>>>>>> add to cache! " + requestURL);
                     }
@@ -110,6 +115,7 @@ public class TestFilter implements Filter {
     }
 
     private String prepareTargetPath(String targetPath, String path, String queryString) {
+        System.out.println(targetPath + " aaaaaaa");
         targetPath += path;
         if (queryString != null && queryString.length() > 0) {
             targetPath += "?" + queryString;
@@ -120,6 +126,7 @@ public class TestFilter implements Filter {
     private String prepareProxyResponse(String data, String siteKey, Map<String, SiteConfig> siteConfigMap) {
         data = data.replaceAll(siteConfigMap.get(siteKey).getTargetPath(), siteConfigMap.get(siteKey).getSourcePath());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
+        //data = data.replaceAll("//", "/");
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
         return data;
@@ -131,6 +138,7 @@ public class TestFilter implements Filter {
         while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
             String hValue = httpServletRequest.getHeader(hName);
+            //System.out.println(hName + " " + hValue);
             if (hName.equals("referer")) {
                 URLHelper source = siteHelper.getSourceUrlHelper();
                 hValue = source.getProtocol() + "://" + source.getHost();

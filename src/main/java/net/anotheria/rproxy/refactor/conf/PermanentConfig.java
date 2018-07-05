@@ -1,4 +1,11 @@
 package net.anotheria.rproxy.refactor.conf;
 
-public class PermanentConfig {
+import net.anotheria.rproxy.refactor.cache.CacheStrategyEnum;
+
+public class PermanentConfig implements IConfig {
+
+    @Override
+    public CacheStrategyEnum getStrategy() {
+        return CacheStrategyEnum.PERMANENT;
+    }
 }

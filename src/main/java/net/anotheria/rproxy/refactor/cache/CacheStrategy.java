@@ -12,6 +12,7 @@ public class CacheStrategy {
 
     private CacheStrategyEnum name;
     private String configName;
+    private String storageAlias;
 
     public CacheStrategyEnum getName() {
         return name;
@@ -29,15 +30,19 @@ public class CacheStrategy {
         this.configName = configName;
     }
 
+    public String getStorageAlias() {
+        return storageAlias;
+    }
+
+    public void setStorageAlias(String storageAlias) {
+        this.storageAlias = storageAlias;
+    }
+
     @Override
     public String toString() {
         return "CacheStrategy{" +
                 ", name=" + name +
                 ", configName='" + configName + '\'' +
                 '}';
-    }
-
-    private void init(IConfig conf, String name){
-        ConfigurationManager.INSTANCE.configureAs(conf, name);
     }
 }

@@ -10,8 +10,12 @@ public final class RProxy<K, V> {
     private ProxyConfig<K, V> proxyConfig;
 
     public RProxy() {
-        proxyConfig = new ProxyConfig<>();
-        ConfigurationManager.INSTANCE.configureAs(proxyConfig, DEFAULT_CONFIG_FILE_NAME);
+        try {
+            proxyConfig = new ProxyConfig<>();
+            ConfigurationManager.INSTANCE.configureAs(proxyConfig, DEFAULT_CONFIG_FILE_NAME);
+        }catch (Exception e){
+
+        }
     }
 
     public RProxy(String configFileName) {
