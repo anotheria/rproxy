@@ -1,6 +1,6 @@
 package net.anotheria.rproxy.refactor.cache;
 
-import net.anotheria.rproxy.refactor.conf.AutoExpiryConfig;
+import net.anotheria.rproxy.refactor.config.AutoExpiryConfig;
 
 import java.util.LinkedHashMap;
 

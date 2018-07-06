@@ -1,4 +1,4 @@
-package net.anotheria.rproxy.refactor.conf;
+package net.anotheria.rproxy.refactor.config;
 
 import net.anotheria.rproxy.refactor.cache.AutoExpiryStrategy;
 import net.anotheria.rproxy.refactor.cache.LRUStrategy;
@@ -20,7 +20,11 @@ public class CacheConfigurer<K, V> {
      */
     public LRUStrategy<K, V> configureLRU(IConfig config) {
         LRUConfig c = (LRUConfig) config;
-        return new LRUStrategy<>(c.getSize());
+        if (c != null) {
+            return new LRUStrategy<>(c.getSize());
+        } else {
+            return new LRUStrategy<>();
+        }
     }
 
     public PermanentStrategy<K, V> configurePermanent(IConfig config) {
@@ -29,8 +33,9 @@ public class CacheConfigurer<K, V> {
     }
 
     public PermanentStrategy<K, V> configurePermanent(String path) {
-        //PermanentConfig c = (PermanentConfig) config;
-        return new PermanentStrategy<>(path);
+        PermanentStrategy<K, V> cache = new PermanentStrategy<>(path);
+        cache.fillAfterRestart(path);
+        return cache;
     }
 
     public AutoExpiryStrategy<K, V> configureAutoExpiry(IConfig config) {

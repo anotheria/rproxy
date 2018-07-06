@@ -1,7 +1,5 @@
 package net.anotheria.rproxy.refactor.cache;
 
-import net.anotheria.rproxy.refactor.conf.IConfig;
-import org.configureme.ConfigurationManager;
 import org.configureme.annotations.ConfigureMe;
 
 /**

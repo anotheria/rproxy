@@ -2,13 +2,14 @@ package net.anotheria.rproxy.refactor;
 
 import net.anotheria.rproxy.refactor.cache.CacheStorage;
 import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
-import net.anotheria.rproxy.refactor.conf.CacheConfigurer;
-import net.anotheria.rproxy.refactor.conf.CacheStrategyConfigConfigurer;
-import net.anotheria.rproxy.refactor.conf.IConfig;
+import net.anotheria.rproxy.refactor.config.CacheConfigurer;
+import net.anotheria.rproxy.refactor.config.CacheStrategyConfigConfigurer;
+import net.anotheria.rproxy.refactor.config.IConfig;
 import org.configureme.ConfigurationManager;
 import org.configureme.annotations.AfterConfiguration;
 import org.configureme.annotations.ConfigureMe;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -108,8 +109,9 @@ public class ProxyConfig<K, V> {
      */
     @AfterConfiguration
     public void initializeConfiguration() {
-        for(CacheStorage storage : cacheStorages){
+        for (CacheStorage storage : cacheStorages) {
             storageMap.put(storage.getAlias(), storage);
+            createStorage(storage.getFolder());
         }
         for (String site : sites) {
             SiteConfig sc = new SiteConfig();
@@ -121,34 +123,42 @@ public class ProxyConfig<K, V> {
 
             if (sc.getCachingPolicy() != null && sc.getCachingPolicy().getCacheStrategy() != null) {
                 IConfig curConfig = CacheStrategyConfigConfigurer.getByStrategyEnumAndConfigName(sc.getCachingPolicy().getCacheStrategy().getName(), sc.getCachingPolicy().getCacheStrategy().getConfigName());
-                if (curConfig != null) {
-                    if (cache.get(site) == null) {
-                        Map<String, ICacheStrategy<K, V>> tmp = new HashMap<>();
-                        cache.put(site, tmp);
-                    }
-                    ICacheStrategy<K, V> cacheInstance;
-                    switch (sc.getCachingPolicy().getCacheStrategy().getName()) {
-                        case LRU:
-                            cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
-                            for (String fileType : sc.getCachingPolicy().getFileType()) {
-                                cache.get(site).put(fileType, cacheInstance);
-                            }
-                            break;
-                        case PERMANENT:
-                            cacheInstance = new CacheConfigurer<K, V>().configurePermanent(storageMap.get(sc.getAlias()).getFolder());
-                            for (String fileType : sc.getCachingPolicy().getFileType()) {
-                                cache.get(site).put(fileType, cacheInstance);
-                            }
-                            break;
-                        case AUTOEXPIRY:
-                            cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
-                            for (String fileType : sc.getCachingPolicy().getFileType()) {
-                                cache.get(site).put(fileType, cacheInstance);
-                            }
-                            break;
-                    }
+                //if (curConfig != null) {
+                if (cache.get(site) == null) {
+                    Map<String, ICacheStrategy<K, V>> tmp = new HashMap<>();
+                    cache.put(site, tmp);
                 }
+                ICacheStrategy<K, V> cacheInstance;
+                System.out.println(sc + " -> Strategy : " + sc.getCachingPolicy().getCacheStrategy().getName());
+                switch (sc.getCachingPolicy().getCacheStrategy().getName()) {
+
+                    case LRU:
+                        cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
+                        for (String fileType : sc.getCachingPolicy().getFileType()) {
+                            cache.get(site).put(fileType, cacheInstance);
+                        }
+                        break;
+                    case PERMANENT:
+                        cacheInstance = new CacheConfigurer<K, V>().configurePermanent(storageMap.get(sc.getAlias()).getFolder());
+                        for (String fileType : sc.getCachingPolicy().getFileType()) {
+                            cache.get(site).put(fileType, cacheInstance);
+                        }
+                        break;
+                    case AUTOEXPIRY:
+                        //undone
+                        cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
+                        for (String fileType : sc.getCachingPolicy().getFileType()) {
+                            cache.get(site).put(fileType, cacheInstance);
+                        }
+                        break;
+                }
+                // }
             }
         }
+    }
+
+    private void createStorage(String path) {
+        new File(path).mkdirs();
+        //System.out.println("Trying to create ... " + path);
     }
 }

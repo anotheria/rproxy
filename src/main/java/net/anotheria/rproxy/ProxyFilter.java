@@ -43,15 +43,15 @@ public class ProxyFilter implements Filter {
 
     public void init(FilterConfig filterConfig) {
 
-        ConfigurationEntity conf = Configurer.getJsonConfiguration();//CacheConfigurer.parseConfigurationFile("conf.json");
+        ConfigurationEntity conf = Configurer.getJsonConfiguration();//CacheConfigurer.parseConfigurationFile("config.json");
         cred = new HashMap<>();
         if (conf == null) {
             //parse from web.xml
             parseWebXml(filterConfig);
             System.out.println("Configuring from web.xml");
         } else {
-            //get from conf.json
-            System.out.println("Configuring via conf.json" + conf.toString());
+            //get from config.json
+            System.out.println("Configuring via config.json" + conf.toString());
             if (conf.getCredentials() != null && conf.getCredentials().length != 0) {
                 for (Credentials c : conf.getCredentials()) {
                     cred.put(c.getLinkNum(), c);
@@ -370,7 +370,7 @@ public class ProxyFilter implements Filter {
 
 //    private static List<ContentReplace> getConfigRulesFromXml() {
 //        XMLParser p = new XMLParser();
-//        return p.parseConfig("conf.xml", XMLParser.getTgNames());
+//        return p.parseConfig("config.xml", XMLParser.getTgNames());
 //    }
 
     private void configure(ConfigurationEntity conf) {

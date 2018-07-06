@@ -40,6 +40,7 @@ public class ProxyFilterTest implements Filter {
             String requestURL = httpServletRequest.getRequestURL().toString();
 
             System.out.println("Request URL : " + requestURL);
+            String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
             String[] ext = httpServletRequest.getPathInfo().split("\\.");
             String fileExtension = "";
@@ -48,10 +49,10 @@ public class ProxyFilterTest implements Filter {
             }
 //================
             if(proxy.siteConfigurationPresent(siteName)){
-                if(proxy.retrieveFromCache(siteName, fileExtension, requestURL) != null){
-                    HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURL);
+                if(proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null){
+                    HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5);
                     prepareHttpServletResponseFromCache(httpServletResponse, r);
-                    System.out.println(requestURL + " ++++++ from cache!");
+                    System.out.println(requestURL + " ++++++ from cache! " + requestURLMD5);
                 }else {
                     String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
                     String queryString = httpServletRequest.getQueryString();
@@ -71,11 +72,11 @@ public class ProxyFilterTest implements Filter {
                     if (httpProxyResponse != null) {
                         prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName);
 
-                        System.out.println(requestURL + " ->" + httpProxyResponse.getStatusCode());
+                        //System.out.println(requestURL + " ->" + httpProxyResponse.getStatusCode());
 //                        for(httpProxyResponse.ge){
 //                            System.out.println();
 //                        }
-                        proxy.addToCache(requestURL, httpProxyResponse, siteName, fileExtension);
+                        proxy.addToCache(requestURLMD5, httpProxyResponse, siteName, fileExtension);
                         System.out.println(fileExtension + " ->>>>>>>>> add to cache! " + requestURL);
                     }
                 }
@@ -115,7 +116,7 @@ public class ProxyFilterTest implements Filter {
     }
 
     private String prepareTargetPath(String targetPath, String path, String queryString) {
-        System.out.println(targetPath + " aaaaaaa");
+        //System.out.println(targetPath + " aaaaaaa");
         targetPath += path;
         if (queryString != null && queryString.length() > 0) {
             targetPath += "?" + queryString;

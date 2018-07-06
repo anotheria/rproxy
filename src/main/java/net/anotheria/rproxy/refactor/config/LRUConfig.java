@@ -1,4 +1,4 @@
-package net.anotheria.rproxy.refactor.conf;
+package net.anotheria.rproxy.refactor.config;
 
 import net.anotheria.rproxy.refactor.cache.CacheStrategyEnum;
 import org.configureme.annotations.ConfigureMe;
