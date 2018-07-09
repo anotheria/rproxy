@@ -12,6 +12,24 @@ public final class URLUtils {
 
 
     /**
+     * Gets file extension from URL path.
+     *
+     * @param path path to resource from URL
+     * @return String file extension with dot at the beginning or null
+     */
+    public static String getFileExtensionFromPath(String path) {
+
+        if (path != null) {
+            String[] parts = path.split("\\.");
+            if (parts.length > 0) {
+                return "." + parts[parts.length - 1];
+            }
+        }
+
+        return "";
+    }
+
+    /**
      * Generates md5 hash of URL
      *
      * @param url to hash

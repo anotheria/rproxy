@@ -39,14 +39,12 @@ public class ProxyFilterTest implements Filter {
             HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
             String requestURL = httpServletRequest.getRequestURL().toString();
 
-            System.out.println("Request URL : " + requestURL);
+            //System.out.println("Request URL : " + requestURL);
             String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
-            String[] ext = httpServletRequest.getPathInfo().split("\\.");
-            String fileExtension = "";
-            if (ext.length != 0) {
-                fileExtension = "." + ext[ext.length - 1];
-            }
+
+            String fileExtension = URLUtils.getFileExtensionFromPath(httpServletRequest.getPathInfo());
+
 //================
             if(proxy.siteConfigurationPresent(siteName)){
                 if(proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null){

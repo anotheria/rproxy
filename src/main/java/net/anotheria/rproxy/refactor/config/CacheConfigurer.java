@@ -40,7 +40,11 @@ public class CacheConfigurer<K, V> {
 
     public AutoExpiryStrategy<K, V> configureAutoExpiry(IConfig config) {
         AutoExpiryConfig c = (AutoExpiryConfig) config;
-        return new AutoExpiryStrategy<>(c);
+        if (c == null) {
+            return new AutoExpiryStrategy<>();
+        } else {
+            return new AutoExpiryStrategy<>(c.getScanInterval());
+        }
     }
 
 }

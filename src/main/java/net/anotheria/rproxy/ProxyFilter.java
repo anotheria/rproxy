@@ -48,10 +48,10 @@ public class ProxyFilter implements Filter {
         if (conf == null) {
             //parse from web.xml
             parseWebXml(filterConfig);
-            System.out.println("Configuring from web.xml");
+            //System.out.println("Configuring from web.xml");
         } else {
             //get from config.json
-            System.out.println("Configuring via config.json" + conf.toString());
+            //System.out.println("Configuring via config.json" + conf.toString());
             if (conf.getCredentials() != null && conf.getCredentials().length != 0) {
                 for (Credentials c : conf.getCredentials()) {
                     cred.put(c.getLinkNum(), c);
@@ -92,10 +92,11 @@ public class ProxyFilter implements Filter {
 
             HttpProxyResponse response = null;
 
-            if(cache.get(appUrl) != null){
+            if (cache.get(appUrl) != null) {
                 response = cache.get(appUrl);
-            }else {
-
+                System.out.println(appUrl + " ++++++++++++++++++ ");
+            } else {
+                System.out.println(appUrl + " ------------------ ");
                 URL u = new URL(appUrl);
 
                 String topPath = getTopPath(appUrl);
@@ -129,9 +130,9 @@ public class ProxyFilter implements Filter {
                     response = getResponse(path, req, helpers.get(0));
                 }
 
-                cache.add(appUrl, response);
             }
             if (response != null) {
+                cache.add(appUrl, response);
                 //handle return type, only write out on wrong return type.
                 res.setContentType(response.getContentType());
                 res.getOutputStream().write(response.getData());
@@ -198,10 +199,9 @@ public class ProxyFilter implements Filter {
             pathToGet += "?" + queryString;
 
         String proxyRequestURL;
-        if(true){
-            proxyRequestURL = p.getBaseLink() + pathToGet;
-            System.out.println(proxyRequestURL);
-        }
+
+        proxyRequestURL = p.getBaseLink() + pathToGet;
+
         HttpProxyRequest proxyRequest = new HttpProxyRequest(proxyRequestURL);
         Enumeration<String> headerNames = req.getHeaderNames();
         while (headerNames.hasMoreElements()) {
@@ -212,10 +212,6 @@ public class ProxyFilter implements Filter {
             }
             if (hName.equals("host")) {
                 hValue = p.getHostBase();
-            }
-            if(hName.equals("origin")){
-                //hValue = hValue.replaceAll("http", "https");
-                System.out.println(hName + " -> " + hValue);
             }
             proxyRequest.addHeader(hName, hValue);
 
