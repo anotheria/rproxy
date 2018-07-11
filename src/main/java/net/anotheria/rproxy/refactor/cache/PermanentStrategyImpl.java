@@ -1,6 +1,7 @@
 package net.anotheria.rproxy.refactor.cache;
 
 import net.anotheria.rproxy.refactor.config.PermanentConfigImpl;
+import net.anotheria.rproxy.utils.FileUtils;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -32,17 +33,10 @@ public class PermanentStrategyImpl<K, V> implements ICacheStrategy<K, V> {
 
     @Override
     public void add(K key, V value) {
-        try {
-            FileOutputStream fileOut = new FileOutputStream(path + key);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(value);
-            out.close();
-            fileOut.close();
+        if (FileUtils.serializeObjectIntoFileInDirectory(value, key.toString(), path)) {
             keys.put(key, null);
-            //System.out.println("Saved to " + path + key);
-        } catch (IOException i) {
-            i.printStackTrace();
         }
+
     }
 
     @Override
@@ -50,31 +44,14 @@ public class PermanentStrategyImpl<K, V> implements ICacheStrategy<K, V> {
         if (!keys.keySet().contains(key)) {
             return null;
         }
-        V e;
-        try {
-            FileInputStream fileIn = new FileInputStream(path + key);
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            e = (V) in.readObject();
-            in.close();
-            fileIn.close();
-        } catch (IOException | ClassNotFoundException i) {
-            i.printStackTrace();
-            return null;
-        }
-        //System.out.println("Got from  " + path + key);
-        return e;
+        return (V) FileUtils.deserializeObjectFromFileFromDirectory(key.toString(), path);
     }
 
     @Override
     public void remove(K key) {
-        try {
-            File file = new File(path + key);
-            Files.deleteIfExists(file.toPath());
+        if (FileUtils.removeFileFromDirectory(key.toString(), path)) {
             keys.remove(key);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
     }
 
     @Override

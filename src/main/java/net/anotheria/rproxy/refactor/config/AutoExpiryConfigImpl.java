@@ -16,6 +16,6 @@ public class AutoExpiryConfigImpl implements StrategyConfig {
 
     @Override
     public CacheStrategyEnum getStrategy() {
-        return CacheStrategyEnum.AUTOEXPIRY;
+        return CacheStrategyEnum.AUTOEXPIRY_MEMORY;
     }
 }

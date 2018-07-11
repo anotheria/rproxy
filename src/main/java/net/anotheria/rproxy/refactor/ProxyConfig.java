@@ -144,9 +144,16 @@ public class ProxyConfig<K, V> {
                             cache.get(site).put(fileType, cacheInstance);
                         }
                         break;
-                    case AUTOEXPIRY:
+                    case AUTOEXPIRY_MEMORY:
                         //undone
-                        cacheInstance = new CacheConfigurer<K, V>().configureAutoExpiry(curConfig);
+                        cacheInstance = new CacheConfigurer<K, V>().configureAutoExpiryMemory(curConfig);
+                        for (String fileType : sc.getCachingPolicy().getFileType()) {
+                            cache.get(site).put(fileType, cacheInstance);
+                        }
+                        break;
+                    case AUTOEXPIRY_DISK:
+                        //undone
+                        cacheInstance = new CacheConfigurer<K, V>().configureAutoExpiryDisk(curConfig, storageMap.get(sc.getAlias()).getFolder());
                         for (String fileType : sc.getCachingPolicy().getFileType()) {
                             cache.get(site).put(fileType, cacheInstance);
                         }

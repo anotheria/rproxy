@@ -5,5 +5,5 @@ package net.anotheria.rproxy.refactor.cache;
  */
 public enum CacheStrategyEnum {
 
-    PERMANENT, LRU, AUTOEXPIRY;
+    PERMANENT, LRU, AUTOEXPIRY_MEMORY, AUTOEXPIRY_DISK;
 }

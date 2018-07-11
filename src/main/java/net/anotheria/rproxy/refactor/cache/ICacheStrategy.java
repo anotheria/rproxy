@@ -30,12 +30,14 @@ public interface ICacheStrategy<K, V> {
     void remove(K key);
 
     /**
+     * TODO remove method after testing
      * Get LinkedHashMap of Key, Value pairs stored in cache.
      * @return LinkedHashMap<K, V> pairs
      */
     LinkedHashMap<K, V> getAllElements();
 
     /**
+     * TODO remove method after testing
      * Print element sequence to console.
      */
     void printElements();

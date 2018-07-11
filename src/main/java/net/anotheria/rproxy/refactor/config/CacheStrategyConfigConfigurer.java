@@ -15,7 +15,7 @@ public class CacheStrategyConfigConfigurer {
                 config = new LRUConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
                 return config;
-            case AUTOEXPIRY:
+            case AUTOEXPIRY_MEMORY:
                 config = new AutoExpiryConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
                 return null;
