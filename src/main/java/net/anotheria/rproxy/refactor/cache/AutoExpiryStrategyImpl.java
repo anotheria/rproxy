@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * @param <K> key
  * @param <V> value
  */
-public class AutoExpiryStrategy<K, V> implements ICacheStrategy<K, V>, Runnable {
+public class AutoExpiryStrategyImpl<K, V> implements ICacheStrategy<K, V>, Runnable {
 
     /**
      * Default value lifetime in seconds
@@ -35,7 +35,7 @@ public class AutoExpiryStrategy<K, V> implements ICacheStrategy<K, V>, Runnable 
      * Initializes autoexpiring in memory strategy instance.
      * <p>Value lifetime will be set to default value.</p>
      */
-    public AutoExpiryStrategy() {
+    public AutoExpiryStrategyImpl() {
         intervalSeconds = DEFAULT_INTERVAL_SECONDS;
         cache = new ConcurrentHashMap<>();
         keyTimeMap = new ConcurrentHashMap<>();
@@ -47,7 +47,7 @@ public class AutoExpiryStrategy<K, V> implements ICacheStrategy<K, V>, Runnable 
      *
      * @param seconds value lifetime in seconds.
      */
-    public AutoExpiryStrategy(Long seconds) {
+    public AutoExpiryStrategyImpl(Long seconds) {
         intervalSeconds = seconds;
         cache = new ConcurrentHashMap<>();
         keyTimeMap = new ConcurrentHashMap<>();

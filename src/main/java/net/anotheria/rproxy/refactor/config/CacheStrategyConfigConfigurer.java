@@ -5,22 +5,22 @@ import org.configureme.ConfigurationManager;
 
 public class CacheStrategyConfigConfigurer {
 
-    public static IConfig getByStrategyEnumAndConfigName(CacheStrategyEnum name, String configName) {
+    public static StrategyConfig getByStrategyEnumAndConfigName(CacheStrategyEnum name, String configName) {
         if (name == null || configName == null)
             return null;
 
-        IConfig config;
+        StrategyConfig config;
         switch (name) {
             case LRU:
-                config = new LRUConfig();
+                config = new LRUConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
                 return config;
             case AUTOEXPIRY:
-                config = new AutoExpiryConfig();
+                config = new AutoExpiryConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
                 return null;
             case PERMANENT:
-                config = new PermanentConfig();
+                config = new PermanentConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
                 return null;
         }

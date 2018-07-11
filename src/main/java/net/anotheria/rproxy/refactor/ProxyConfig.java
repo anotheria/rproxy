@@ -4,7 +4,7 @@ import net.anotheria.rproxy.refactor.cache.CacheStorage;
 import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
 import net.anotheria.rproxy.refactor.config.CacheConfigurer;
 import net.anotheria.rproxy.refactor.config.CacheStrategyConfigConfigurer;
-import net.anotheria.rproxy.refactor.config.IConfig;
+import net.anotheria.rproxy.refactor.config.StrategyConfig;
 import org.configureme.ConfigurationManager;
 import org.configureme.annotations.AfterConfiguration;
 import org.configureme.annotations.ConfigureMe;
@@ -122,7 +122,7 @@ public class ProxyConfig<K, V> {
             siteHelperMap.put(site, siteHelper);
 
             if (sc.getCachingPolicy() != null && sc.getCachingPolicy().getCacheStrategy() != null) {
-                IConfig curConfig = CacheStrategyConfigConfigurer.getByStrategyEnumAndConfigName(sc.getCachingPolicy().getCacheStrategy().getName(), sc.getCachingPolicy().getCacheStrategy().getConfigName());
+                StrategyConfig curConfig = CacheStrategyConfigConfigurer.getByStrategyEnumAndConfigName(sc.getCachingPolicy().getCacheStrategy().getName(), sc.getCachingPolicy().getCacheStrategy().getConfigName());
                 //if (curConfig != null) {
                 if (cache.get(site) == null) {
                     Map<String, ICacheStrategy<K, V>> tmp = new HashMap<>();

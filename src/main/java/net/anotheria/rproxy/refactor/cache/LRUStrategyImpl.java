@@ -10,7 +10,7 @@ import java.util.Map;
  * @param <K> type of Key
  * @param <V> type of Value to store
  */
-public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
+public class LRUStrategyImpl<K, V> implements ICacheStrategy<K, V> {
 
     private static final int DEFAULT_SIZE = 100;
 
@@ -25,14 +25,14 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
      * @param size i.e. max number of elements stored in cache before last element will be pushed out
      *             from it when add a new one.
      */
-    public LRUStrategy(int size) {
+    public LRUStrategyImpl(int size) {
         this.size = size;
     }
 
     /**
      * Constructor to create new instance of LRU with default size (100).
      */
-    public LRUStrategy() {
+    public LRUStrategyImpl() {
         size = DEFAULT_SIZE;
     }
 
@@ -192,7 +192,7 @@ public class LRUStrategy<K, V> implements ICacheStrategy<K, V> {
 
     @Override
     public String toString() {
-        return "LRUStrategy{" +
+        return "LRUStrategyImpl{" +
                 "map=" + map +
                 ", size=" + size +
                 '}';

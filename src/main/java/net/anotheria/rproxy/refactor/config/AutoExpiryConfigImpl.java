@@ -2,7 +2,7 @@ package net.anotheria.rproxy.refactor.config;
 
 import net.anotheria.rproxy.refactor.cache.CacheStrategyEnum;
 
-public class AutoExpiryConfig implements IConfig{
+public class AutoExpiryConfigImpl implements StrategyConfig {
 
     private Long scanInterval;
 

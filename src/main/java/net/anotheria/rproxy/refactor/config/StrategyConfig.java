@@ -5,7 +5,7 @@ import net.anotheria.rproxy.refactor.cache.CacheStrategyEnum;
 /**
  * Interface to mark up Configs for Cache Strategies.
  */
-public interface IConfig {
+public interface StrategyConfig {
 
     CacheStrategyEnum getStrategy();
 }

@@ -1,6 +1,6 @@
 package net.anotheria.rproxy.refactor.cache;
 
-import net.anotheria.rproxy.refactor.config.PermanentConfig;
+import net.anotheria.rproxy.refactor.config.PermanentConfigImpl;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -14,7 +14,7 @@ import java.util.Map;
  * @param <K>
  * @param <V>
  */
-public class PermanentStrategy<K, V> implements ICacheStrategy<K, V> {
+public class PermanentStrategyImpl<K, V> implements ICacheStrategy<K, V> {
 
     private String path;
     /**
@@ -22,11 +22,11 @@ public class PermanentStrategy<K, V> implements ICacheStrategy<K, V> {
      */
     private Map<K, K> keys = new HashMap<>();
 
-    public PermanentStrategy(String path) {
+    public PermanentStrategyImpl(String path) {
         this.path = path;
     }
 
-    public PermanentStrategy(PermanentConfig config) {
+    public PermanentStrategyImpl(PermanentConfigImpl config) {
 
     }
 

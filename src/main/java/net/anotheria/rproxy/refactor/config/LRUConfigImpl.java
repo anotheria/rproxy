@@ -7,7 +7,7 @@ import org.configureme.annotations.ConfigureMe;
  * Configuration for LRU strategy.
  */
 @ConfigureMe(allfields = true)
-public class LRUConfig implements IConfig {
+public class LRUConfigImpl implements StrategyConfig {
 
     private int size;
 

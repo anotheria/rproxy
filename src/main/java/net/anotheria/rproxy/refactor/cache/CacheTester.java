@@ -4,7 +4,7 @@ public class CacheTester {
 
     public static void main(String... args){
 
-        ICacheStrategy<Integer, String> cache = new LRUStrategy<>(3);
+        ICacheStrategy<Integer, String> cache = new LRUStrategyImpl<>(3);
 
         String[] names = new String[] {"Alina", "Ivan", "Oleg", "Grisha", "Vasja", "Lolka"};
 

@@ -5,14 +5,11 @@ import net.anotheria.rproxy.conf.*;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
-import net.anotheria.rproxy.refactor.ProxyConfig;
-import net.anotheria.rproxy.refactor.SiteConfig;
 import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
-import net.anotheria.rproxy.refactor.cache.LRUStrategy;
+import net.anotheria.rproxy.refactor.cache.LRUStrategyImpl;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
-import org.configureme.ConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +36,7 @@ public class ProxyFilter implements Filter {
     private Map<Integer, List<ContentReplace>> configRules;
     private Map<Integer, Credentials> cred;
 
-    private static ICacheStrategy<String, HttpProxyResponse> cache = new LRUStrategy<>(150);
+    private static ICacheStrategy<String, HttpProxyResponse> cache = new LRUStrategyImpl<>(150);
 
     public void init(FilterConfig filterConfig) {
 

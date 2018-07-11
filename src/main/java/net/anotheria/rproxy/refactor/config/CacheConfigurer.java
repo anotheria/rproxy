@@ -1,8 +1,8 @@
 package net.anotheria.rproxy.refactor.config;
 
-import net.anotheria.rproxy.refactor.cache.AutoExpiryStrategy;
-import net.anotheria.rproxy.refactor.cache.LRUStrategy;
-import net.anotheria.rproxy.refactor.cache.PermanentStrategy;
+import net.anotheria.rproxy.refactor.cache.AutoExpiryStrategyImpl;
+import net.anotheria.rproxy.refactor.cache.LRUStrategyImpl;
+import net.anotheria.rproxy.refactor.cache.PermanentStrategyImpl;
 
 /**
  * Class for creation and configuration instances of Cache Strategies.
@@ -16,34 +16,34 @@ public class CacheConfigurer<K, V> {
      * Creates new instance of LRU strategy cache using configuration.
      *
      * @param config entity to configure LRU strategy cache.
-     * @return LRUStrategy instance
+     * @return LRUStrategyImpl instance
      */
-    public LRUStrategy<K, V> configureLRU(IConfig config) {
-        LRUConfig c = (LRUConfig) config;
+    public LRUStrategyImpl<K, V> configureLRU(StrategyConfig config) {
+        LRUConfigImpl c = (LRUConfigImpl) config;
         if (c != null) {
-            return new LRUStrategy<>(c.getSize());
+            return new LRUStrategyImpl<>(c.getSize());
         } else {
-            return new LRUStrategy<>();
+            return new LRUStrategyImpl<>();
         }
     }
 
-    public PermanentStrategy<K, V> configurePermanent(IConfig config) {
-        PermanentConfig c = (PermanentConfig) config;
-        return new PermanentStrategy<>(c);
+    public PermanentStrategyImpl<K, V> configurePermanent(StrategyConfig config) {
+        PermanentConfigImpl c = (PermanentConfigImpl) config;
+        return new PermanentStrategyImpl<>(c);
     }
 
-    public PermanentStrategy<K, V> configurePermanent(String path) {
-        PermanentStrategy<K, V> cache = new PermanentStrategy<>(path);
+    public PermanentStrategyImpl<K, V> configurePermanent(String path) {
+        PermanentStrategyImpl<K, V> cache = new PermanentStrategyImpl<>(path);
         cache.fillAfterRestart(path);
         return cache;
     }
 
-    public AutoExpiryStrategy<K, V> configureAutoExpiry(IConfig config) {
-        AutoExpiryConfig c = (AutoExpiryConfig) config;
+    public AutoExpiryStrategyImpl<K, V> configureAutoExpiry(StrategyConfig config) {
+        AutoExpiryConfigImpl c = (AutoExpiryConfigImpl) config;
         if (c == null) {
-            return new AutoExpiryStrategy<>();
+            return new AutoExpiryStrategyImpl<>();
         } else {
-            return new AutoExpiryStrategy<>(c.getScanInterval());
+            return new AutoExpiryStrategyImpl<>(c.getScanInterval());
         }
     }
 
