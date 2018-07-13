@@ -131,7 +131,6 @@ public class ProxyConfig<K, V> {
                 ICacheStrategy<K, V> cacheInstance;
                 //System.out.println(sc + " -> Strategy : " + sc.getCachingPolicy().getCacheStrategy().getName());
                 switch (sc.getCachingPolicy().getCacheStrategy().getName()) {
-
                     case LRU:
                         cacheInstance = new CacheConfigurer<K, V>().configureLRU(curConfig);
                         for (String fileType : sc.getCachingPolicy().getFileType()) {
@@ -153,13 +152,14 @@ public class ProxyConfig<K, V> {
                         break;
                     case AUTOEXPIRY_DISK:
                         //undone
+                        System.out.println(curConfig);
+                        System.out.println(storageMap.get(sc.getAlias()).getFolder());
                         cacheInstance = new CacheConfigurer<K, V>().configureAutoExpiryDisk(curConfig, storageMap.get(sc.getAlias()).getFolder());
                         for (String fileType : sc.getCachingPolicy().getFileType()) {
                             cache.get(site).put(fileType, cacheInstance);
                         }
                         break;
                 }
-                // }
             }
         }
     }

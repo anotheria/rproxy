@@ -10,6 +10,7 @@ import net.anotheria.rproxy.refactor.SiteHelper;
 import net.anotheria.rproxy.refactor.URLHelper;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.utils.URLUtils;
+import org.apache.http.Header;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -46,12 +47,12 @@ public class ProxyFilterTest implements Filter {
             String fileExtension = URLUtils.getFileExtensionFromPath(httpServletRequest.getPathInfo());
 
 //================
-            if(proxy.siteConfigurationPresent(siteName)){
-                if(proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null){
+            if (proxy.siteConfigurationPresent(siteName)) {
+                if (proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null) {
                     HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5);
                     prepareHttpServletResponseFromCache(httpServletResponse, r);
                     System.out.println(requestURL + " ++++++ from cache! " + requestURLMD5);
-                }else {
+                } else {
                     String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
                     String queryString = httpServletRequest.getQueryString();
 
@@ -91,7 +92,7 @@ public class ProxyFilterTest implements Filter {
     }
 
     private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key) {
-        if(httpProxyResponse.isHtml()) {
+        if (httpProxyResponse.isHtml()) {
             try {
                 String oldData = new String(httpProxyResponse.getData(), httpProxyResponse.getContentEncoding());
                 String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap());
@@ -105,6 +106,11 @@ public class ProxyFilterTest implements Filter {
 
     private void doServletResponse(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
         try {
+            for (Header h : httpProxyResponse.getHeaders()) {
+                if (h.getName().equalsIgnoreCase("expires")) {
+                    httpServletResponse.addHeader(h.getName(), h.getValue());
+                }
+            }
             httpServletResponse.setContentType(httpProxyResponse.getContentType());
             httpServletResponse.getOutputStream().write(httpProxyResponse.getData());
             httpServletResponse.getOutputStream().flush();

@@ -6,8 +6,12 @@ import java.util.LinkedHashMap;
 
 public class MemoryAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICacheStrategy<K, V> {
 
-    public MemoryAutoExpiry(int intervalSeconds, int timeToLiveSeconds) {
+    public MemoryAutoExpiry(Long intervalSeconds, Long timeToLiveSeconds) {
         super(intervalSeconds, timeToLiveSeconds);
+    }
+
+    public MemoryAutoExpiry() {
+        super();
     }
 
 
@@ -39,7 +43,7 @@ public class MemoryAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICac
     }
 
     @Override
-    protected void removeExpiredValues(){
+    protected void removeExpiredValues() {
         super.removeExpiredValues();
         //System.out.println("Scan for expired...");
     }

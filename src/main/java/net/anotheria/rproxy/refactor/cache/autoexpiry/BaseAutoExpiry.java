@@ -4,16 +4,35 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+/**
+ *
+ * @param <K>
+ * @param <V>
+ */
 public abstract class BaseAutoExpiry<K, V> implements Runnable {
+
+    public static final Long DEFAULT_SCAN_INTERVAL_SECONDS = 30L;
+    /**
+     * 1h
+     */
+    public static final Long DEFAULT_TIME_TO_LIVE_SECONDS = 3600L;
 
     private Map<K, Long> expiryMap;
     private Map<K, V> cache;
-    private int intervalSeconds;
-    private int timeToLiveSeconds;
+    private Long intervalSeconds;
+    private Long timeToLiveSeconds;
 
-    protected BaseAutoExpiry(int intervalSeconds, int timeToLiveSeconds) {
+    protected BaseAutoExpiry(Long intervalSeconds, Long timeToLiveSeconds) {
         this.intervalSeconds = intervalSeconds;
         this.timeToLiveSeconds = timeToLiveSeconds;
+        expiryMap = new ConcurrentHashMap<>();
+        cache = new ConcurrentHashMap<>();
+        new Thread(this).start();
+    }
+
+    protected BaseAutoExpiry() {
+        this.intervalSeconds = DEFAULT_SCAN_INTERVAL_SECONDS;
+        this.timeToLiveSeconds = DEFAULT_TIME_TO_LIVE_SECONDS;
         expiryMap = new ConcurrentHashMap<>();
         cache = new ConcurrentHashMap<>();
         new Thread(this).start();
@@ -35,25 +54,28 @@ public abstract class BaseAutoExpiry<K, V> implements Runnable {
         this.cache = cache;
     }
 
-    public int getIntervalSeconds() {
+    public Long getIntervalSeconds() {
         return intervalSeconds;
     }
 
-    public void setIntervalSeconds(int intervalSeconds) {
+    public void setIntervalSeconds(Long intervalSeconds) {
         this.intervalSeconds = intervalSeconds;
     }
 
-    public int getTimeToLiveSeconds() {
+    public Long getTimeToLiveSeconds() {
         return timeToLiveSeconds;
     }
 
-    public void setTimeToLiveSeconds(int timeToLiveSeconds) {
+    public void setTimeToLiveSeconds(Long timeToLiveSeconds) {
         this.timeToLiveSeconds = timeToLiveSeconds;
     }
 
     protected void removeExpiredValues() {
+        System.out.println("Scan for expired... ");
         for (K key : expiryMap.keySet()) {
             if (isExpired(key)) {
+                Long cur = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+                System.out.println(key + " expired! lived for " + (cur - expiryMap.get(key)));
                 remove(key);
             }
         }

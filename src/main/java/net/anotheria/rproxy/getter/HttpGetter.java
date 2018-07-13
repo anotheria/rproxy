@@ -94,6 +94,10 @@ public class HttpGetter {
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
         ret.getContentType();
+        /**
+         * add response headers
+         */
+        ret.setHeaders(headers);
         final HttpEntity entity = response.getEntity();
 
         if (entity != null && entity.getContentType() != null) {

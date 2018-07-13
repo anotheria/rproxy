@@ -1,5 +1,7 @@
 package net.anotheria.rproxy.getter;
 
+import org.apache.http.Header;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -15,6 +17,15 @@ public class HttpProxyResponse implements Serializable {
 	private String statusMessage;
 	private String contentType;
 	private String contentEncoding;
+	private Header[] headers;
+
+	public Header[] getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(Header[] headers) {
+		this.headers = headers;
+	}
 
 	public byte[] getData() {
 		return data;

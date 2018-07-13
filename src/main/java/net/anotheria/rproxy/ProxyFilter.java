@@ -10,6 +10,7 @@ import net.anotheria.rproxy.refactor.cache.LRUStrategyImpl;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.replacement.URLReplacementUtil;
 import net.anotheria.util.StringUtils;
+import org.apache.http.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class ProxyFilter implements Filter {
     private Map<Integer, List<ContentReplace>> configRules;
     private Map<Integer, Credentials> cred;
 
-    private static ICacheStrategy<String, HttpProxyResponse> cache = new LRUStrategyImpl<>(150);
+    private static ICacheStrategy<String, HttpProxyResponse> cache = null; //new LRUStrategyImpl<>(150);
 
     public void init(FilterConfig filterConfig) {
 
@@ -89,7 +90,7 @@ public class ProxyFilter implements Filter {
 
             HttpProxyResponse response = null;
 
-            if (cache.get(appUrl) != null) {
+            if (cache != null && cache.get(appUrl) != null) {
                 response = cache.get(appUrl);
                 System.out.println(appUrl + " ++++++++++++++++++ ");
             } else {
@@ -129,7 +130,17 @@ public class ProxyFilter implements Filter {
 
             }
             if (response != null) {
-                cache.add(appUrl, response);
+                if(cache != null) {
+                    cache.add(appUrl, response);
+                }
+                /**
+                 * set expires header from wp
+                 */
+                for (Header h : response.getHeaders()) {
+                    if (h.getName().equalsIgnoreCase("expires")) {
+                        res.addHeader(h.getName(), h.getValue());
+                    }
+                }
                 //handle return type, only write out on wrong return type.
                 res.setContentType(response.getContentType());
                 res.getOutputStream().write(response.getData());

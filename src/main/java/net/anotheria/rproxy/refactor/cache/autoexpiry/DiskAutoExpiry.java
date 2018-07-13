@@ -4,9 +4,7 @@ import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
 import net.anotheria.rproxy.utils.FileUtils;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class DiskAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICacheStrategy<K, V> {
 
@@ -14,8 +12,15 @@ public class DiskAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICache
     private String metaDataFileName;
 
 
-    public DiskAutoExpiry(int intervalSeconds, int timeToLiveSeconds, String fileDirectory, String metaDataFileName) {
+    public DiskAutoExpiry(Long intervalSeconds, Long timeToLiveSeconds, String fileDirectory, String metaDataFileName) {
         super(intervalSeconds, timeToLiveSeconds);
+        this.fileDirectory = fileDirectory;
+        this.metaDataFileName = metaDataFileName;
+        loadPreviousData(metaDataFileName);
+    }
+
+    public DiskAutoExpiry(String fileDirectory, String metaDataFileName) {
+        super();
         this.fileDirectory = fileDirectory;
         this.metaDataFileName = metaDataFileName;
         loadPreviousData(metaDataFileName);

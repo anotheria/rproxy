@@ -1,6 +1,5 @@
 package net.anotheria.rproxy.refactor.config;
 
-import net.anotheria.rproxy.refactor.cache.AutoExpiryStrategyImpl;
 import net.anotheria.rproxy.refactor.cache.LRUStrategyImpl;
 import net.anotheria.rproxy.refactor.cache.PermanentStrategyImpl;
 import net.anotheria.rproxy.refactor.cache.autoexpiry.DiskAutoExpiry;
@@ -42,24 +41,20 @@ public class CacheConfigurer<K, V> {
 
     public MemoryAutoExpiry<K, V> configureAutoExpiryMemory(StrategyConfig config) {
         AutoExpiryConfigImpl c = (AutoExpiryConfigImpl) config;
-//        if (c == null) {
-//            return new AutoExpiryStrategyImpl<>();
-//        } else {
-//            return new AutoExpiryStrategyImpl<>(c.getScanInterval());
-//        }
         if (c == null) {
-            return new MemoryAutoExpiry<>(1, 10);
+            return new MemoryAutoExpiry<>();
         } else {
-            return new MemoryAutoExpiry<>(1, 10);
+            return new MemoryAutoExpiry<>(c.getIntervalSeconds(), c.getTimeToLiveSeconds());
         }
     }
 
     public DiskAutoExpiry<K, V> configureAutoExpiryDisk(StrategyConfig config, String path) {
         AutoExpiryConfigImpl c = (AutoExpiryConfigImpl) config;
+
         if (c == null) {
-            return new DiskAutoExpiry<>(1, 60, path, "meta");
+            return new DiskAutoExpiry<>(path, "meta");
         } else {
-            return new DiskAutoExpiry<>(1, 60, path, "meta");
+            return new DiskAutoExpiry<>(c.getIntervalSeconds(), c.getTimeToLiveSeconds(), path, "meta");
         }
     }
 

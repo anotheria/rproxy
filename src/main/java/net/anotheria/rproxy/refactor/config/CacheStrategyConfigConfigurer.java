@@ -18,11 +18,15 @@ public class CacheStrategyConfigConfigurer {
             case AUTOEXPIRY_MEMORY:
                 config = new AutoExpiryConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
-                return null;
+                return config;
+            case AUTOEXPIRY_DISK:
+                config = new AutoExpiryConfigImpl();
+                ConfigurationManager.INSTANCE.configureAs(config, configName);
+                return config;
             case PERMANENT:
                 config = new PermanentConfigImpl();
                 ConfigurationManager.INSTANCE.configureAs(config, configName);
-                return null;
+                return config;
         }
 
         return null;
