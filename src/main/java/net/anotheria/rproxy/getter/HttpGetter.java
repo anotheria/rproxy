@@ -10,14 +10,12 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -77,7 +75,6 @@ public class HttpGetter {
         //System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
 
-
         List<HttpProxyHeader> hreq = req.getHeaders();
         for (HttpProxyHeader h : hreq) {
             //System.out.println("Req..... " + h.getName() + " " + h.getValue());
@@ -85,15 +82,17 @@ public class HttpGetter {
         HttpResponse response = getHttpResponse(req, cred);
 
         Header[] headers = response.getAllHeaders();
-        for (Header h : headers) {
-            //System.out.println("Response " + h.getName() + " : " + h.getValue());
-        }
+//        System.out.println("=================================");
+//        System.out.println("GETTER URL : " + req.getUrl());
+//        for (Header h : headers) {
+//            System.out.println("Response original " + h.getName() + " : " + h.getValue());
+//        }
 
 
         HttpProxyResponse ret = new HttpProxyResponse();
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
-        ret.getContentType();
+        //ret.getContentType();
         /**
          * add response headers
          */
@@ -132,9 +131,9 @@ public class HttpGetter {
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
             provider.setCredentials(authScope, credentials);
-            client = HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
+            client = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).setDefaultCredentialsProvider(provider).build();
         } else {
-            client = HttpClientBuilder.create().build();
+            client = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build();
         }
 
         return client.execute(request);

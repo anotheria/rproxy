@@ -4,22 +4,31 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 /**
  * This class contains useful methods for interaction with URLs.
  */
 public final class URLUtils {
 
+    public static String getLocaleFromHost(String host) {
+        String[] s = host.split("\\.");
+        if (s.length == 0) {
+            return null;
+        }
+        return s[s.length - 1];
+    }
 
     /**
      * Gets file extension from URL path.
      *
      * @param path path to resource from URL
-     * @return String file extension with dot at the beginning or null
+     * @return String file extension with dot at the beginning or empty string
      */
     public static String getFileExtensionFromPath(String path) {
 
-        if (path != null) {
+        //System.out.println("!!!!!! ->> " + path + path.contains("."));
+        if (path != null && path.contains(".")) {
             String[] parts = path.split("\\.");
             if (parts.length > 0) {
                 return "." + parts[parts.length - 1];
@@ -82,4 +91,18 @@ public final class URLUtils {
         }
     }
 
+    public static String replaceLocaleForHost(String host, String locale) {
+        String[] s = host.split("\\.");
+
+        if (s.length == 0 || s.length == 1) {
+            return host;
+        }
+
+        s[s.length - 1] = locale;
+        String res = s[0];
+        for (int i = 1; i < s.length; i++) {
+            res += "." + s[i];
+        }
+        return res;
+    }
 }

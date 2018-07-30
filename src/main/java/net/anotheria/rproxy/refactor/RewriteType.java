@@ -1,5 +1,5 @@
 package net.anotheria.rproxy.refactor;
 
 public enum RewriteType {
-    REPLACE, PERM301, TEMP302;
+    REPLACE, P301, T302;
 }

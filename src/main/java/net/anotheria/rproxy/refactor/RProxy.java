@@ -2,6 +2,9 @@ package net.anotheria.rproxy.refactor;
 
 import org.configureme.ConfigurationManager;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 
 public final class RProxy<K, V> {
 
@@ -105,4 +108,8 @@ public final class RProxy<K, V> {
         }
     }
 
+    public void appplyRedirects(HttpServletResponse httpServletResponse) {
+        httpServletResponse.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+        httpServletResponse.addHeader("Location", "http://localhost:8080/rproxy-test/");
+    }
 }

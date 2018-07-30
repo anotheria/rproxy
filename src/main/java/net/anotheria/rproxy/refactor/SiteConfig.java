@@ -31,6 +31,9 @@ public class SiteConfig {
 
     private String alias;
 
+    private String[] locales;
+
+
     public String getAlias() {
         return alias;
     }

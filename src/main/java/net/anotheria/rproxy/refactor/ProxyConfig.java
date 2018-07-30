@@ -10,6 +10,7 @@ import org.configureme.annotations.AfterConfiguration;
 import org.configureme.annotations.ConfigureMe;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,15 +110,23 @@ public class ProxyConfig<K, V> {
      */
     @AfterConfiguration
     public void initializeConfiguration() {
-        for (CacheStorage storage : cacheStorages) {
-            storageMap.put(storage.getAlias(), storage);
-            createStorage(storage.getFolder());
+        if(cacheStorages != null) {
+            for (CacheStorage storage : cacheStorages) {
+                storageMap.put(storage.getAlias(), storage);
+                createStorage(storage.getFolder());
+            }
         }
         for (String site : sites) {
             SiteConfig sc = new SiteConfig();
             ConfigurationManager.INSTANCE.configureAs(sc, site);
-            //System.out.println("Config : " + site + " -> " + sc.getSiteCredentials());
+            //System.out.println("Config : " + site + " -> " + Arrays.toString(sc.getRewriteRules()));
+            sc.setSourcePath(sc.getSourcePath() + "/" + site);
             siteConfigMap.put(site, sc);
+            //SiteHelper siteHelper = new SiteHelper(new URLHelper(sc.getSourcePath()), new URLHelper(sc.getTargetPath()));
+
+            /**
+             * foreach siteconfig locale we need to put in siteHelperMap key with this locale and Value is the copy of SiteHelper with changed locale.
+             */
             SiteHelper siteHelper = new SiteHelper(new URLHelper(sc.getSourcePath()), new URLHelper(sc.getTargetPath()));
             siteHelperMap.put(site, siteHelper);
 

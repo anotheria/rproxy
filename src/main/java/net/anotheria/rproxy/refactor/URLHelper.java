@@ -15,6 +15,7 @@ public class URLHelper {
     private String topPath;
     private String query;
     private String protocol;
+    private String locale;
 
     public URLHelper(String url){
         try{
@@ -25,9 +26,33 @@ public class URLHelper {
             topPath = URLUtils.getTopPath(url);
             query = u.getQuery();
             protocol = u.getProtocol();
+            locale = URLUtils.getLocaleFromHost(host);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Copy Constructor for URLHelper with new locale and changes host.
+     * @param toCopy
+     * @param locale
+     */
+    public URLHelper(URLHelper toCopy, String locale){
+        this.host = URLUtils.replaceLocaleForHost(toCopy.getHost(), locale);
+        this.port = toCopy.getPort();
+        this.path = toCopy.getPath();
+        this.topPath = toCopy.getTopPath();
+        this.query = toCopy.getQuery();
+        this.protocol = toCopy.getProtocol();
+        this.locale = locale;
+    }
+
+    public String getLocale(){
+        return locale;
+    }
+
+    public void setLocale(String locale){
+        this.locale = locale;
     }
 
     public String getHost() {
@@ -76,6 +101,19 @@ public class URLHelper {
 
     public void setProtocol(String protocol) {
         this.protocol = protocol;
+    }
+
+    public String getLink(){
+        String res = protocol + "://" + host;
+        if(port != -1)
+            res += ":" + port;
+
+        res += path;
+
+        if(query != null)
+            res += "?" + query;
+
+        return res;
     }
 
     @Override

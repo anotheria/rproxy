@@ -79,6 +79,11 @@ public class HttpProxyResponse implements Serializable {
 		return contentType != null && contentType.contains("text/html");
 	}
 
+	public boolean isCss() {
+		//this is temporarly solution.
+		return contentType != null && contentType.contains("css");
+	}
+
 	public String getContentEncoding() {
 		return contentEncoding;
 	}
