@@ -151,6 +151,7 @@ public class URLHelper {
                 ", topPath='" + topPath + '\'' +
                 ", query='" + query + '\'' +
                 ", protocol='" + protocol + '\'' +
+                ", locale='" + locale + '\'' +
                 '}';
     }
 }

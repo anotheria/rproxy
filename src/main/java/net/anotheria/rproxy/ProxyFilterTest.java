@@ -44,9 +44,7 @@ public class ProxyFilterTest implements Filter {
             HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
             String requestURL = httpServletRequest.getRequestURL().toString();
             String locale = URLUtils.getLocaleFromHost(new java.net.URL(requestURL).getHost());
-
             URL = requestURL;
-            //System.out.println("Request URL : " + requestURL);
             String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
             String siteNameLocale = siteName + "." + locale;
@@ -67,8 +65,7 @@ public class ProxyFilterTest implements Filter {
                 } else {
                     String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
                     String queryString = httpServletRequest.getQueryString();
-
-                    String path = requestURL.replaceAll(proxy.getProxyConfig().getSiteConfigMap().get(siteName).getSourcePath(), "");
+                    String path = new java.net.URL(requestURL).getPath().replaceAll("/" + siteName, "");
                     targetPath = prepareTargetPath(targetPath, path, queryString);
                     HttpProxyRequest httpProxyRequest = new HttpProxyRequest(targetPath);
                     /**
@@ -78,16 +75,15 @@ public class ProxyFilterTest implements Filter {
                     URLHelper source = null;
                     URLHelper target = null;
 
-                    if(temp.get(siteNameLocale) == null){
+                    if (temp.get(siteNameLocale) == null) {
                         source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
                         target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
                         temp.put(siteNameLocale, source);
-                    }else{
+                    } else {
                         source = temp.get(siteNameLocale);
                         target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
                     }
 
-                    //SiteHelper currentSiteHelper = proxy.getProxyConfig().getSiteHelperMap().get(siteName);
                     prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, source, target);
 
                     HttpProxyResponse httpProxyResponse = null;
@@ -98,13 +94,13 @@ public class ProxyFilterTest implements Filter {
                     }
 
                     if (httpProxyResponse != null) {
+                        //prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale);
+                        /**
+                         *
+                         */
                         prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale);
-
                         if (!fileExtension.equals("")) {
                             prepareHeadersForCaching(httpProxyResponse, httpServletResponse);
-                            //System.out.println("prepared after request ... !!!!!!!!!!!");
-                            //proxy.addToCache(requestURLMD5, httpProxyResponse, siteName, fileExtension);
-                            //System.out.println(fileExtension + " ->>>>>>>>> add to cache! " + requestURL);
                         }
                         doServletResponse(httpServletResponse, httpProxyResponse);
                     }
@@ -116,12 +112,7 @@ public class ProxyFilterTest implements Filter {
     }
 
     private void prepareHeadersForCaching(HttpProxyResponse httpProxyResponse, HttpServletResponse httpServletResponse) {
-        for (String h : httpServletResponse.getHeaderNames()) {
-            //System.out.println(" Hhhhhhhh ->> " + h + " + " + httpServletResponse.getHeader(h));
-        }
-        //System.out.println(httpProxyResponse.toString());
         for (Header h : httpProxyResponse.getHeaders()) {
-            //System.out.println("-----" + h.getName() + " : " + h.getValue());
             if (h.getName().equalsIgnoreCase("expires") ||
                     h.getName().equalsIgnoreCase("last-modified") ||
                     h.getName().equalsIgnoreCase("etag") ||
@@ -131,7 +122,6 @@ public class ProxyFilterTest implements Filter {
                 httpServletResponse.addHeader(h.getName(), h.getValue());
             }
         }
-
     }
 
     private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale) {
@@ -139,7 +129,6 @@ public class ProxyFilterTest implements Filter {
          * Ssl links in CSS files.
          */
         if (httpProxyResponse.isHtml() || httpProxyResponse.isCss()) {
-            //if (httpProxyResponse.isHtml()) {
             try {
                 String oldData = new String(httpProxyResponse.getData(), httpProxyResponse.getContentEncoding());
                 String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap().get(key), proxy.getProxyConfig().getSiteHelperMap().get(key), locale);
@@ -171,16 +160,12 @@ public class ProxyFilterTest implements Filter {
             httpServletResponse.setContentType(httpProxyResponse.getContentType());
             httpServletResponse.getOutputStream().write(httpProxyResponse.getData());
             httpServletResponse.getOutputStream().flush();
-            for (String h : httpServletResponse.getHeaderNames()) {
-                //System.out.println(" After... ->> " + h + " + " + httpServletResponse.getHeader(h));
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private String prepareTargetPath(String targetPath, String path, String queryString) {
-        //System.out.println(targetPath + " aaaaaaa");
         targetPath += path;
         if (queryString != null && queryString.length() > 0) {
             targetPath += "?" + queryString;
@@ -188,7 +173,7 @@ public class ProxyFilterTest implements Filter {
         return targetPath;
     }
 
-//    private String prepareProxyResponse(String data, String siteKey, Map<String, SiteConfig> siteConfigMap, Map<String, SiteHelper> siteHelperMap) {
+    //    private String prepareProxyResponse(String data, String siteKey, Map<String, SiteConfig> siteConfigMap, Map<String, SiteHelper> siteHelperMap) {
 //        data = data.replaceAll(siteConfigMap.get(siteKey).getTargetPath(), siteConfigMap.get(siteKey).getSourcePath());
 //        data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
 //        //data = data.replaceAll("//", "/");
@@ -198,6 +183,7 @@ public class ProxyFilterTest implements Filter {
 //    }
     private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale) {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
+        //System.out.println("prepare proxy response target path to -> " + temp.getLink());
         data = data.replaceAll(siteConfig.getTargetPath(), temp.getLink());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
         //data = data.replaceAll("//", "/");
@@ -215,11 +201,15 @@ public class ProxyFilterTest implements Filter {
             //System.out.println(hName + " " + hValue);
             if (hName.equals("referer")) {
                 //URLHelper source = siteHelper.getSourceUrlHelper();
+
                 hValue = source.getProtocol() + "://" + source.getHost();
+
                 if (source.getPort() != -1) {
                     hValue += source.getPort();
                 }
                 hValue += "/";
+
+                //System.out.println("hvalue : " + hValue);
             }
             if (hName.equals("host")) {
                 //URLHelper target = siteHelper.getTargetUrlHelper();
