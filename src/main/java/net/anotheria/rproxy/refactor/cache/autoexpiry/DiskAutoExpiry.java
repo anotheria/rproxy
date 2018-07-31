@@ -6,12 +6,24 @@ import net.anotheria.rproxy.utils.FileUtils;
 import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Disk autoexpiry cache implementation
+ * <p>Data will be stored on disk and will be available even if user stop application.</p>
+ * @param <K>
+ * @param <V>
+ */
 public class DiskAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICacheStrategy<K, V> {
 
     private String fileDirectory;
     private String metaDataFileName;
 
-
+    /**
+     *
+     * @param intervalSeconds scan interval
+     * @param timeToLiveSeconds
+     * @param fileDirectory directory to store files
+     * @param metaDataFileName name of file which will contain data on disk about objects in cache
+     */
     public DiskAutoExpiry(Long intervalSeconds, Long timeToLiveSeconds, String fileDirectory, String metaDataFileName) {
         super(intervalSeconds, timeToLiveSeconds);
         this.fileDirectory = fileDirectory;
@@ -19,6 +31,11 @@ public class DiskAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICache
         loadPreviousData(metaDataFileName);
     }
 
+    /**
+     * Default configuration
+     * @param fileDirectory directory to store files
+     * @param metaDataFileName name of file which will contain data on disk about objects in cache
+     */
     public DiskAutoExpiry(String fileDirectory, String metaDataFileName) {
         super();
         this.fileDirectory = fileDirectory;
@@ -26,6 +43,10 @@ public class DiskAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICache
         loadPreviousData(metaDataFileName);
     }
 
+    /**
+     * Load data from metadata file
+     * @param metaDataFileName
+     */
     private void loadPreviousData(String metaDataFileName) {
         ConcurrentHashMap<K, Long> meta = (ConcurrentHashMap<K, Long>) FileUtils.deserializeObjectFromFileFromDirectory(metaDataFileName, fileDirectory);
         if(meta != null){

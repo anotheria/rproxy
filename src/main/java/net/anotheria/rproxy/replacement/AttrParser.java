@@ -1,7 +1,5 @@
 package net.anotheria.rproxy.replacement;
 
-import java.util.Arrays;
-
 public class AttrParser {
     private AttrParser(){
 

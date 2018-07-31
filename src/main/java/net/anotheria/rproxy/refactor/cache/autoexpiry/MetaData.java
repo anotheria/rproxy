@@ -1,10 +1,18 @@
 package net.anotheria.rproxy.refactor.cache.autoexpiry;
 
+/**
+ * MetaData class contains data for disk autoexpiry caching which prevents data drop after program stop.
+ */
 public class MetaData {
 
     private String fileName;
     private Long creationTimestampSeconds;
 
+    /**
+     *
+     * @param fileName
+     * @param creationTimestampSeconds
+     */
     public MetaData(String fileName, Long creationTimestampSeconds) {
         this.fileName = fileName;
         this.creationTimestampSeconds = creationTimestampSeconds;

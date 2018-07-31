@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Base class for AutoExpiry strategies.
  * @param <K>
  * @param <V>
  */
@@ -22,6 +22,11 @@ public abstract class BaseAutoExpiry<K, V> implements Runnable {
     private Long intervalSeconds;
     private Long timeToLiveSeconds;
 
+    /**
+     *
+     * @param intervalSeconds scan interval for expired objects
+     * @param timeToLiveSeconds for objects
+     */
     protected BaseAutoExpiry(Long intervalSeconds, Long timeToLiveSeconds) {
         this.intervalSeconds = intervalSeconds;
         this.timeToLiveSeconds = timeToLiveSeconds;
@@ -30,6 +35,9 @@ public abstract class BaseAutoExpiry<K, V> implements Runnable {
         new Thread(this).start();
     }
 
+    /**
+     * Default configuration
+     */
     protected BaseAutoExpiry() {
         this.intervalSeconds = DEFAULT_SCAN_INTERVAL_SECONDS;
         this.timeToLiveSeconds = DEFAULT_TIME_TO_LIVE_SECONDS;
@@ -70,6 +78,9 @@ public abstract class BaseAutoExpiry<K, V> implements Runnable {
         this.timeToLiveSeconds = timeToLiveSeconds;
     }
 
+    /**
+     * Search for expired values
+     */
     protected void removeExpiredValues() {
         System.out.println("Scan for expired... ");
         for (K key : expiryMap.keySet()) {
@@ -81,17 +92,31 @@ public abstract class BaseAutoExpiry<K, V> implements Runnable {
         }
     }
 
+    /**
+     * Add new value to cache
+     * @param key
+     * @param value
+     */
     protected void add(K key, V value) {
         Long currentTimeStamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         cache.put(key, value);
         expiryMap.put(key, currentTimeStamp);
     }
 
+    /**
+     * Remove value from cache
+     * @param key
+     */
     protected void remove(K key) {
         cache.remove(key);
         expiryMap.remove(key);
     }
 
+    /**
+     *
+     * @param key
+     * @return value if present, otherwise null
+     */
     protected V get(K key) {
         V value = null;
         if (expiryMap.containsKey(key)) {
@@ -102,6 +127,10 @@ public abstract class BaseAutoExpiry<K, V> implements Runnable {
         return value;
     }
 
+    /**
+     * Updates creation time for object in cache.
+     * @param key
+     */
     protected void updateCreationTimestamp(K key){
         Long currentTimeStamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         expiryMap.put(key, currentTimeStamp);

@@ -3,8 +3,18 @@ package net.anotheria.rproxy.utils;
 import java.io.*;
 import java.nio.file.Files;
 
+/**
+ * Class contains useful methods for interaction with files.
+ */
 public class FileUtils {
 
+    /**
+     * Serialize given object to the given folder.
+     * @param o object to serialize
+     * @param fileName name of file
+     * @param fileDir directory to store file with serialized object
+     * @return true if success
+     */
     public static boolean serializeObjectIntoFileInDirectory(Object o, String fileName, String fileDir) {
         try {
             FileOutputStream fileOut = new FileOutputStream(fileDir + fileName);
@@ -19,6 +29,12 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Retrieve serialized object from file
+     * @param fileName
+     * @param fileDir
+     * @return return object if success, otherwise null
+     */
     public static Object deserializeObjectFromFileFromDirectory(String fileName, String fileDir) {
         Object o;
         try {
@@ -35,6 +51,12 @@ public class FileUtils {
         return o;
     }
 
+    /**
+     * Remove file from directory
+     * @param fileName
+     * @param fileDir
+     * @return true if success
+     */
     public static boolean removeFileFromDirectory(String fileName, String fileDir){
         try {
             File file = new File(fileDir + fileName);

@@ -4,6 +4,12 @@ import net.anotheria.rproxy.refactor.cache.ICacheStrategy;
 
 import java.util.LinkedHashMap;
 
+/**
+ * Memory autoexpiry cache implementation.
+ * <p>Data will be stored only in RAM and will be lost if user stop application.</p>
+ * @param <K>
+ * @param <V>
+ */
 public class MemoryAutoExpiry<K, V> extends BaseAutoExpiry<K, V> implements ICacheStrategy<K, V> {
 
     public MemoryAutoExpiry(Long intervalSeconds, Long timeToLiveSeconds) {

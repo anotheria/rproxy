@@ -4,7 +4,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 /**
  * This class contains useful methods for interaction with URLs.
@@ -91,6 +90,12 @@ public final class URLUtils {
         }
     }
 
+    /**
+     * Replaces locale in given String host
+     * @param host i.e. www.site.de
+     * @param locale i.e. de, ch, at etc...
+     * @return host String with new locale if success, otherwise host String without changes
+     */
     public static String replaceLocaleForHost(String host, String locale) {
         String[] s = host.split("\\.");
 
