@@ -72,7 +72,7 @@ public class HttpGetter {
     }
 
     public static HttpProxyResponse getURL(HttpProxyRequest req, UsernamePasswordCredentials cred) throws IOException {
-        //System.out.println("Trying to get "+req);
+        System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
 
         List<HttpProxyHeader> hreq = req.getHeaders();

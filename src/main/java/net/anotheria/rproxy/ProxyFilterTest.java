@@ -29,6 +29,8 @@ public class ProxyFilterTest implements Filter {
 
     private Map<String, URLHelper> temp = new HashMap<>();
 
+    private Map<String, String> permitedSourceLocales = new HashMap<>();
+
     public void init(FilterConfig filterConfig) {
 
     }
@@ -49,6 +51,10 @@ public class ProxyFilterTest implements Filter {
             String siteName = URLUtils.getTopPath(requestURL);
             String siteNameLocale = siteName + "." + locale;
 
+            System.out.println(siteNameLocale + "!!!!!!!!!");
+
+            System.out.println(requestURL);
+
             String fileExtension = URLUtils.getFileExtensionFromPath(httpServletRequest.getPathInfo());
 
             if (proxy.siteConfigurationPresent(siteName)) {
@@ -57,11 +63,8 @@ public class ProxyFilterTest implements Filter {
                  */
                 if (proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null) {
                     HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5);
-                    //proxy.appplyRedirects(httpServletResponse);
                     prepareHeadersForCaching(r, httpServletResponse);
-                    //prepareHttpServletResponseFromCache(httpServletResponse, r);
                     doServletResponse(httpServletResponse, r);
-                    //System.out.println(requestURL + " ++++++ from cache! " + requestURLMD5);
                 } else {
                     String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
                     String queryString = httpServletRequest.getQueryString();
@@ -75,13 +78,19 @@ public class ProxyFilterTest implements Filter {
                     URLHelper source = null;
                     URLHelper target = null;
 
-                    if (temp.get(siteNameLocale) == null) {
-                        source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
-                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
-                        temp.put(siteNameLocale, source);
+                    if (!sourceLocaleIsPermited(siteName, locale)) {
+                        //locale restricted, throw 404
+                        httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
+                        return;
                     } else {
-                        source = temp.get(siteNameLocale);
-                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        if (temp.get(siteNameLocale) == null) {
+                            source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
+                            target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                            temp.put(siteNameLocale, source);
+                        } else {
+                            source = temp.get(siteNameLocale);
+                            target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        }
                     }
 
                     prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, source, target);
@@ -111,17 +120,33 @@ public class ProxyFilterTest implements Filter {
         }
     }
 
+    private boolean sourceLocaleIsPermited(String siteName, String locale) {
+        final String[] locales = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getBaseLocales();
+        for (String loc : locales) {
+            if (loc.equals(locale)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void prepareHeadersForCaching(HttpProxyResponse httpProxyResponse, HttpServletResponse httpServletResponse) {
+        //System.out.println("===========================================");
+        //System.out.println(httpProxyResponse);
         for (Header h : httpProxyResponse.getHeaders()) {
             if (h.getName().equalsIgnoreCase("expires") ||
                     h.getName().equalsIgnoreCase("last-modified") ||
                     h.getName().equalsIgnoreCase("etag") ||
                     h.getName().equalsIgnoreCase("content-encoding") ||
                     h.getName().equalsIgnoreCase("keep-alive") ||
-                    h.getName().equalsIgnoreCase("cache-Control")) {
+                    h.getName().equalsIgnoreCase("cache-Control") ||
+                    h.getName().equalsIgnoreCase("vary")) {
                 httpServletResponse.addHeader(h.getName(), h.getValue());
             }
+
+            //System.out.println(h.getName() + " -> " + h.getValue());
         }
+        //System.out.println("===========================================");
     }
 
     private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale) {
@@ -141,22 +166,6 @@ public class ProxyFilterTest implements Filter {
 
     private void doServletResponse(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
         try {
-
-            /**
-             * permanent cache is cached in browser? -y
-             * redirect by url?
-             */
-//            if (false && URL.endsWith("profil-bild-foto-upload/")) {
-//                System.out.println(URL.endsWith("profil-bild-foto-upload/"));
-//                //httpServletResponse.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
-//                //httpServletResponse.addHeader("Location", "http://localhost:8080/rproxy-test/");
-//            }
-//            System.out.println("=================================");
-//
-//            System.out.println("URL : " + URL);
-//            for(String s : httpServletResponse.getHeaderNames()){
-//                System.out.println("Response final : " + s + " -> " + httpServletResponse.getHeader(s));
-//            }
             httpServletResponse.setContentType(httpProxyResponse.getContentType());
             httpServletResponse.getOutputStream().write(httpProxyResponse.getData());
             httpServletResponse.getOutputStream().flush();

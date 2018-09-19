@@ -31,7 +31,7 @@ public class SiteConfig {
 
     private String alias;
 
-    private String[] locales;
+    private String[] baseLocales;
 
 
     public String getAlias() {
@@ -83,6 +83,14 @@ public class SiteConfig {
 
     public void setSiteCredentials(SiteCredentials siteCredentials) {
         this.siteCredentials = siteCredentials;
+    }
+
+    public String[] getBaseLocales() {
+        return baseLocales;
+    }
+
+    public void setBaseLocales(String[] baseLocales) {
+        this.baseLocales = baseLocales;
     }
 
     @Override
