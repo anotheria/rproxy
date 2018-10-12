@@ -45,13 +45,19 @@ public class ProxyFilterTest implements Filter {
             HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
             HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
             String requestURL = httpServletRequest.getRequestURL().toString();
-            String locale = URLUtils.getLocaleFromHost(new java.net.URL(requestURL).getHost());
+            String host = new java.net.URL(requestURL).getHost();
+            String locale = URLUtils.getLocaleFromHost(host);
             URL = requestURL;
             String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
             String siteNameLocale = siteName + "." + locale;
 
-            System.out.println(siteNameLocale + "!!!!!!!!!");
+            if(hostExcluded(host, siteName)){
+                httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            //System.out.println(siteNameLocale + "!!!!!!!!!");
 
             System.out.println(requestURL);
 
@@ -118,6 +124,16 @@ public class ProxyFilterTest implements Filter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean hostExcluded(String host, String siteName) {
+        for(String h : proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts()){
+            if(host.equals(h)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean sourceLocaleIsPermited(String siteName, String locale) {

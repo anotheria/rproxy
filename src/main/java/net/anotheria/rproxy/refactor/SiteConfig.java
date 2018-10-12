@@ -33,6 +33,8 @@ public class SiteConfig {
 
     private String[] baseLocales;
 
+    private String[] excludeHosts;
+
 
     public String getAlias() {
         return alias;
@@ -91,6 +93,14 @@ public class SiteConfig {
 
     public void setBaseLocales(String[] baseLocales) {
         this.baseLocales = baseLocales;
+    }
+
+    public String[] getExcludeHosts() {
+        return excludeHosts;
+    }
+
+    public void setExcludeHosts(String[] excludeHosts) {
+        this.excludeHosts = excludeHosts;
     }
 
     @Override
