@@ -214,6 +214,7 @@ public class ProxyFilterTest implements Filter {
         //data = data.replaceAll("//", "/");
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
+        data = data.replaceAll("data-alt=\"/", "data-alt=\"" + "/" + siteKey + "/");
         return data;
     }
 
