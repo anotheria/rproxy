@@ -15,11 +15,11 @@ import org.apache.http.Header;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 @Monitor
 public class ProxyFilterTest implements Filter {
@@ -60,8 +60,9 @@ public class ProxyFilterTest implements Filter {
             //System.out.println(siteNameLocale + "!!!!!!!!!");
 
             System.out.println(requestURL);
+            String originalPath = new java.net.URL(requestURL).getPath();
 
-            String fileExtension = URLUtils.getFileExtensionFromPath(httpServletRequest.getPathInfo());
+            String fileExtension = URLUtils.getFileExtensionFromPath(originalPath);
 
             if (proxy.siteConfigurationPresent(siteName)) {
                 /**
@@ -74,7 +75,7 @@ public class ProxyFilterTest implements Filter {
                 } else {
                     String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
                     String queryString = httpServletRequest.getQueryString();
-                    String path = new java.net.URL(requestURL).getPath().replaceAll("/" + siteName, "");
+                    String path = originalPath.replaceAll("/" + siteName, "");
                     targetPath = prepareTargetPath(targetPath, path, queryString);
                     HttpProxyRequest httpProxyRequest = new HttpProxyRequest(targetPath);
                     /**
@@ -117,10 +118,24 @@ public class ProxyFilterTest implements Filter {
                         if (!fileExtension.equals("")) {
                             prepareHeadersForCaching(httpProxyResponse, httpServletResponse);
                         }
+                        addGzipEncoding(httpServletResponse, httpProxyResponse);
                         doServletResponse(httpServletResponse, httpProxyResponse);
                     }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addGzipEncoding(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
+        try {
+            OutputStream outputStream = new ByteArrayOutputStream();
+            GZIPOutputStream gzip = new GZIPOutputStream(outputStream);
+            gzip.write(httpProxyResponse.getData());
+            gzip.close();
+            httpProxyResponse.setData(((ByteArrayOutputStream) outputStream).toByteArray());
+            httpServletResponse.addHeader("Content-Encoding", "gzip");
         } catch (IOException e) {
             e.printStackTrace();
         }
