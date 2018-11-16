@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-//@Monitor
+@Monitor
 public class ProxyFilterTest implements Filter {
 
     private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
