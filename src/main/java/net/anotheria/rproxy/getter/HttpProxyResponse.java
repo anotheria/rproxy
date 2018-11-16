@@ -18,6 +18,7 @@ public class HttpProxyResponse implements Serializable {
 	private String contentType;
 	private String contentEncoding;
 	private Header[] headers;
+	private boolean gzip;
 
 	public Header[] getHeaders() {
 		return headers;
@@ -49,6 +50,14 @@ public class HttpProxyResponse implements Serializable {
 
 	public void setStatusMessage(String statusMessage) {
 		this.statusMessage = statusMessage;
+	}
+
+	public boolean isGzip() {
+		return gzip;
+	}
+
+	public void setGzip(boolean gzip) {
+		this.gzip = gzip;
 	}
 
 	public void setContentType(String contentType) {

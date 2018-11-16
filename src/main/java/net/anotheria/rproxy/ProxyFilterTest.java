@@ -11,21 +11,25 @@ import net.anotheria.rproxy.refactor.URLHelper;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.utils.URLUtils;
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.ParseException;
+import org.apache.http.message.BasicHeader;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-@Monitor
+//@Monitor
 public class ProxyFilterTest implements Filter {
 
     private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
-    private static String URL = null;
+    //private static String URL = null;
 
     private Map<String, URLHelper> temp = new HashMap<>();
 
@@ -40,6 +44,10 @@ public class ProxyFilterTest implements Filter {
     }
 
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) {
+        filter(servletRequest, servletResponse, filterChain);
+    }
+
+    private void filter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) {
         try {
 
             HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
@@ -47,17 +55,15 @@ public class ProxyFilterTest implements Filter {
             String requestURL = httpServletRequest.getRequestURL().toString();
             String host = new java.net.URL(requestURL).getHost();
             String locale = URLUtils.getLocaleFromHost(host);
-            URL = requestURL;
+            //URL = requestURL;
             String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
             String siteNameLocale = siteName + "." + locale;
 
-            if(hostExcluded(host, siteName)){
+            if (hostExcluded(host, siteName)) {
                 httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
-
-            //System.out.println(siteNameLocale + "!!!!!!!!!");
 
             System.out.println(requestURL);
             String originalPath = new java.net.URL(requestURL).getPath();
@@ -65,12 +71,12 @@ public class ProxyFilterTest implements Filter {
             String fileExtension = URLUtils.getFileExtensionFromPath(originalPath);
 
             if (proxy.siteConfigurationPresent(siteName)) {
-                /**
-                 * cache part must be changed bcs of locale
-                 */
                 if (proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null) {
                     HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5);
                     prepareHeadersForCaching(r, httpServletResponse);
+                    if(r.isGzip()){
+                        headerForGzip(httpServletResponse);
+                    }
                     doServletResponse(httpServletResponse, r);
                 } else {
                     String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
@@ -110,15 +116,12 @@ public class ProxyFilterTest implements Filter {
                     }
 
                     if (httpProxyResponse != null) {
-                        //prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale);
-                        /**
-                         *
-                         */
                         prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale);
                         if (!fileExtension.equals("")) {
+                            addGzipEncoding(httpServletResponse, httpProxyResponse);
                             prepareHeadersForCaching(httpProxyResponse, httpServletResponse);
                         }
-                        addGzipEncoding(httpServletResponse, httpProxyResponse);
+                        proxy.addToCache(requestURLMD5, httpProxyResponse, siteName, fileExtension);
                         doServletResponse(httpServletResponse, httpProxyResponse);
                     }
                 }
@@ -135,15 +138,20 @@ public class ProxyFilterTest implements Filter {
             gzip.write(httpProxyResponse.getData());
             gzip.close();
             httpProxyResponse.setData(((ByteArrayOutputStream) outputStream).toByteArray());
-            httpServletResponse.addHeader("Content-Encoding", "gzip");
+            httpProxyResponse.setGzip(true);
+            headerForGzip(httpServletResponse);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void headerForGzip(HttpServletResponse httpServletResponse){
+        httpServletResponse.addHeader("Content-Encoding", "gzip");
+    }
+
     private boolean hostExcluded(String host, String siteName) {
-        for(String h : proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts()){
-            if(host.equals(h)){
+        for (String h : proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts()) {
+            if (host.equals(h)) {
                 return true;
             }
         }
@@ -162,8 +170,6 @@ public class ProxyFilterTest implements Filter {
     }
 
     private void prepareHeadersForCaching(HttpProxyResponse httpProxyResponse, HttpServletResponse httpServletResponse) {
-        //System.out.println("===========================================");
-        //System.out.println(httpProxyResponse);
         for (Header h : httpProxyResponse.getHeaders()) {
             if (h.getName().equalsIgnoreCase("expires") ||
                     h.getName().equalsIgnoreCase("last-modified") ||
@@ -174,10 +180,7 @@ public class ProxyFilterTest implements Filter {
                     h.getName().equalsIgnoreCase("vary")) {
                 httpServletResponse.addHeader(h.getName(), h.getValue());
             }
-
-            //System.out.println(h.getName() + " -> " + h.getValue());
         }
-        //System.out.println("===========================================");
     }
 
     private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale) {
@@ -213,20 +216,10 @@ public class ProxyFilterTest implements Filter {
         return targetPath;
     }
 
-    //    private String prepareProxyResponse(String data, String siteKey, Map<String, SiteConfig> siteConfigMap, Map<String, SiteHelper> siteHelperMap) {
-//        data = data.replaceAll(siteConfigMap.get(siteKey).getTargetPath(), siteConfigMap.get(siteKey).getSourcePath());
-//        data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
-//        //data = data.replaceAll("//", "/");
-//        data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
-//        data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
-//        return data;
-//    }
     private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale) {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
-        //System.out.println("prepare proxy response target path to -> " + temp.getLink());
         data = data.replaceAll(siteConfig.getTargetPath(), temp.getLink());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
-        //data = data.replaceAll("//", "/");
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
         data = data.replaceAll("data-alt=\"/", "data-alt=\"" + "/" + siteKey + "/");
@@ -239,21 +232,14 @@ public class ProxyFilterTest implements Filter {
         while (headerNames.hasMoreElements()) {
             String hName = headerNames.nextElement();
             String hValue = httpServletRequest.getHeader(hName);
-            //System.out.println(hName + " " + hValue);
             if (hName.equals("referer")) {
-                //URLHelper source = siteHelper.getSourceUrlHelper();
-
                 hValue = source.getProtocol() + "://" + source.getHost();
-
                 if (source.getPort() != -1) {
                     hValue += source.getPort();
                 }
                 hValue += "/";
-
-                //System.out.println("hvalue : " + hValue);
             }
             if (hName.equals("host")) {
-                //URLHelper target = siteHelper.getTargetUrlHelper();
                 hValue = target.getHost();
             }
             httpProxyRequest.addHeader(hName, hValue);
