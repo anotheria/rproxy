@@ -17,8 +17,11 @@ public class URLHelper {
     private String protocol;
     private String locale;
 
+    private String originalURL;
+
     public URLHelper(String url){
         try{
+            originalURL = url;
             URL u = new URL(url);
             host = u.getHost();
             port = u.getPort();
@@ -153,5 +156,9 @@ public class URLHelper {
                 ", protocol='" + protocol + '\'' +
                 ", locale='" + locale + '\'' +
                 '}';
+    }
+
+    public String getOriginalURL() {
+        return originalURL;
     }
 }

@@ -100,7 +100,12 @@ public class ProxyFilterTest implements Filter {
 
                     if (temp.get(siteNameLocale) == null) {
                         source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
-                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        URLHelper targetUrlHelper = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        if(!targetPath.equals(targetUrlHelper.getOriginalURL())){
+                            target = new URLHelper(targetPath);
+                        }else {
+                            target = targetUrlHelper;
+                        }
                         temp.put(siteNameLocale, source);
                     } else {
                         source = temp.get(siteNameLocale);
