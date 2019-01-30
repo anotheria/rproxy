@@ -100,16 +100,15 @@ public class ProxyFilterTest implements Filter {
 
                     if (temp.get(siteNameLocale) == null) {
                         source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
-                        URLHelper targetUrlHelper = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
-                        if(!targetPath.equals(targetUrlHelper.getOriginalURL())){
-                            target = new URLHelper(targetPath);
-                        }else {
-                            target = targetUrlHelper;
-                        }
+                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
                         temp.put(siteNameLocale, source);
                     } else {
                         source = temp.get(siteNameLocale);
-                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        if(currentLocaleSpecRule != null){
+                            target = new URLHelper(targetPath);
+                        }else {
+                            target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        }
                     }
 
 
@@ -123,7 +122,7 @@ public class ProxyFilterTest implements Filter {
                     }
 
                     if (httpProxyResponse != null) {
-                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale);
+                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale, currentLocaleSpecRule);
                         if (!fileExtension.equals("")) {
                             addGzipEncoding(httpServletResponse, httpProxyResponse);
                             prepareHeadersForCaching(httpProxyResponse, httpServletResponse);
@@ -203,14 +202,14 @@ public class ProxyFilterTest implements Filter {
         }
     }
 
-    private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale) {
+    private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale, LocaleSpecialTarget rule) {
         /**
          * Ssl links in CSS files.
          */
         if (httpProxyResponse.isHtml() || httpProxyResponse.isCss()) {
             try {
                 String oldData = new String(httpProxyResponse.getData(), httpProxyResponse.getContentEncoding());
-                String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap().get(key), proxy.getProxyConfig().getSiteHelperMap().get(key), locale);
+                String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap().get(key), proxy.getProxyConfig().getSiteHelperMap().get(key), locale, rule);
                 httpProxyResponse.setData(newData.getBytes());
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
@@ -236,9 +235,13 @@ public class ProxyFilterTest implements Filter {
         return targetPath;
     }
 
-    private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale) {
+    private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale, LocaleSpecialTarget rule) {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
-        data = data.replaceAll(siteConfig.getTargetPath(), temp.getLink());
+        String path = siteConfig.getTargetPath();
+        if(rule != null){
+           path = rule.getCustomTarget();
+        }
+        data = data.replaceAll(path, temp.getLink());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
