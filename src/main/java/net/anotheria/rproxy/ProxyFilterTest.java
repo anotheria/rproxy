@@ -4,10 +4,7 @@ import net.anotheria.moskito.aop.annotation.Monitor;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
-import net.anotheria.rproxy.refactor.RProxy;
-import net.anotheria.rproxy.refactor.SiteConfig;
-import net.anotheria.rproxy.refactor.SiteHelper;
-import net.anotheria.rproxy.refactor.URLHelper;
+import net.anotheria.rproxy.refactor.*;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.utils.URLUtils;
 import org.apache.http.Header;
@@ -29,11 +26,8 @@ import java.util.zip.GZIPOutputStream;
 public class ProxyFilterTest implements Filter {
 
     private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
-    //private static String URL = null;
-
     private Map<String, URLHelper> temp = new HashMap<>();
-
-    private Map<String, String> permitedSourceLocales = new HashMap<>();
+    private Map<String, String> sitenameLocaleSpecialTargetRule = new HashMap<>();
 
     public void init(FilterConfig filterConfig) {
 
@@ -71,15 +65,28 @@ public class ProxyFilterTest implements Filter {
             String fileExtension = URLUtils.getFileExtensionFromPath(originalPath);
 
             if (proxy.siteConfigurationPresent(siteName)) {
+                //if locale permitted
+                if (!sourceLocaleIsPermited(siteName, locale)) {
+                    //locale restricted, throw 404
+                    httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+                //if has spec rule
+                LocaleSpecialTarget currentLocaleSpecRule = hasSpecRule(siteName, locale);
                 if (proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null) {
                     HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5);
                     prepareHeadersForCaching(r, httpServletResponse);
-                    if(r.isGzip()){
+                    if (r.isGzip()) {
                         headerForGzip(httpServletResponse);
                     }
                     doServletResponse(httpServletResponse, r);
                 } else {
-                    String targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
+                    String targetPath;
+                    if(currentLocaleSpecRule == null){
+                        targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
+                    }else {
+                        targetPath = currentLocaleSpecRule.getCustomTarget();
+                    }
                     String queryString = httpServletRequest.getQueryString();
                     String path = originalPath.replaceAll("/" + siteName, "");
                     targetPath = prepareTargetPath(targetPath, path, queryString);
@@ -91,20 +98,15 @@ public class ProxyFilterTest implements Filter {
                     URLHelper source = null;
                     URLHelper target = null;
 
-                    if (!sourceLocaleIsPermited(siteName, locale)) {
-                        //locale restricted, throw 404
-                        httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
-                        return;
+                    if (temp.get(siteNameLocale) == null) {
+                        source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
+                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        temp.put(siteNameLocale, source);
                     } else {
-                        if (temp.get(siteNameLocale) == null) {
-                            source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
-                            target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
-                            temp.put(siteNameLocale, source);
-                        } else {
-                            source = temp.get(siteNameLocale);
-                            target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
-                        }
+                        source = temp.get(siteNameLocale);
+                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
                     }
+
 
                     prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, source, target);
 
@@ -131,6 +133,19 @@ public class ProxyFilterTest implements Filter {
         }
     }
 
+    private LocaleSpecialTarget hasSpecRule(String siteName, String locale) {
+        LocaleSpecialTarget[] rules = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getLocaleSpecialTargets();
+        if(rules == null || rules.length == 0){
+            return null;
+        }
+        for (LocaleSpecialTarget rule : rules) {
+            if (rule.getLocale().equals(locale)) {
+                return rule;
+            }
+        }
+        return null;
+    }
+
     private void addGzipEncoding(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
         try {
             OutputStream outputStream = new ByteArrayOutputStream();
@@ -145,7 +160,7 @@ public class ProxyFilterTest implements Filter {
         }
     }
 
-    private void headerForGzip(HttpServletResponse httpServletResponse){
+    private void headerForGzip(HttpServletResponse httpServletResponse) {
         httpServletResponse.addHeader("Content-Encoding", "gzip");
     }
 

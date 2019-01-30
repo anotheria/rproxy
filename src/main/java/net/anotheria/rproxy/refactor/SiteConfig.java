@@ -35,6 +35,8 @@ public class SiteConfig {
 
     private String[] excludeHosts;
 
+    private LocaleSpecialTarget[] localeSpecialTargets;
+
 
     public String getAlias() {
         return alias;
@@ -111,6 +113,14 @@ public class SiteConfig {
                 ", rewriteRules=" + Arrays.toString(rewriteRules) +
                 ", cachingPolicy=" + cachingPolicy +
                 '}';
+    }
+
+    public LocaleSpecialTarget[] getLocaleSpecialTargets() {
+        return localeSpecialTargets;
+    }
+
+    public void setLocaleSpecialTargets(LocaleSpecialTarget[] localeSpecialTargets) {
+        this.localeSpecialTargets = localeSpecialTargets;
     }
 }
 
