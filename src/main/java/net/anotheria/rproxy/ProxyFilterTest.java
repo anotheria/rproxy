@@ -28,6 +28,7 @@ public class ProxyFilterTest implements Filter {
     private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
     private Map<String, URLHelper> temp = new HashMap<>();
     private Map<String, String> sitenameLocaleSpecialTargetRule = new HashMap<>();
+    private static final String W3TC_MINIFY = "w3tc_minify";
 
     public void init(FilterConfig filterConfig) {
 
@@ -63,6 +64,10 @@ public class ProxyFilterTest implements Filter {
             String originalPath = new java.net.URL(requestURL).getPath();
 
             String fileExtension = URLUtils.getFileExtensionFromPath(originalPath);
+
+//            if(fileExtension.equals("")){
+//                fileExtension = probablyW3TotalCahcePluginHasMinifiedFile(httpServletRequest);
+//            }
 
             if (proxy.siteConfigurationPresent(siteName)) {
                 //if locale permitted
@@ -100,7 +105,11 @@ public class ProxyFilterTest implements Filter {
 
                     if (temp.get(siteNameLocale) == null) {
                         source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
-                        target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        if(currentLocaleSpecRule == null) {
+                            target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
+                        }else {
+                            target = new URLHelper(currentLocaleSpecRule.getCustomTarget());
+                        }
                         temp.put(siteNameLocale, source);
                     } else {
                         source = temp.get(siteNameLocale);
@@ -135,6 +144,18 @@ public class ProxyFilterTest implements Filter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String probablyW3TotalCahcePluginHasMinifiedFile(HttpServletRequest httpServletRequest) {
+        String value = httpServletRequest.getParameter(W3TC_MINIFY);
+        if(value != null){
+            String[] values = value.split("\\.");
+            if(values.length > 0) {
+                return "." + values[values.length - 1];
+            }
+        }
+
+        return "";
     }
 
     private LocaleSpecialTarget hasSpecRule(String siteName, String locale) {
@@ -240,6 +261,9 @@ public class ProxyFilterTest implements Filter {
         String path = siteConfig.getTargetPath();
         if(rule != null){
            path = rule.getCustomTarget();
+        }
+        if(data.contains("bg-red")){
+            System.out.println("");
         }
         data = data.replaceAll(path, temp.getLink());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
