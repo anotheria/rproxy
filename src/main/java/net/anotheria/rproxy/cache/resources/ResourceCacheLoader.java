@@ -29,6 +29,10 @@ public class ResourceCacheLoader implements CacheLoader<ResourceCacheKey, Cachea
         HttpProxyRequest proxyRequest = new HttpProxyRequest(sourceUrl);
         HttpProxyResponse response = HttpGetter.getUrlContent(proxyRequest);
 
+        if (response.getStatusCode() != 200) {
+            return null;
+        }
+
         CacheableResource ret = new CacheableResource();
         ret.setContentType(response.getContentType());
         ret.setUrl(key.getUrl());

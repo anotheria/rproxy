@@ -41,7 +41,9 @@ public class ResourceCacheManager {
 
         try {
             ret = cacheLoader.load(key);
-            put(key, ret);
+            if (ret != null) {
+                put(key, ret);
+            }
         } catch (Exception e) {
             LOG.error("get({}) failed: {}", key, e.getMessage(), e);
         }
