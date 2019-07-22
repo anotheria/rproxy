@@ -7,9 +7,15 @@ import java.util.Objects;
  */
 public class ResourceCacheKey {
     private String url;
+    private String siteName;
 
-    public ResourceCacheKey(String url) {
+    public ResourceCacheKey(String siteName, String url) {
+        this.siteName = siteName;
         this.url = url;
+    }
+
+    public String getSiteName() {
+        return siteName;
     }
 
     public String getUrl() {
@@ -25,11 +31,11 @@ public class ResourceCacheKey {
             return false;
         }
         ResourceCacheKey that = (ResourceCacheKey) o;
-        return Objects.equals(url, that.url);
+        return Objects.equals(url, that.url) && Objects.equals(siteName, that.siteName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(url);
+        return Objects.hash(url, siteName);
     }
 }

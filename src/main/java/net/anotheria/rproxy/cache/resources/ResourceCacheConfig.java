@@ -10,6 +10,7 @@ public class ResourceCacheConfig {
     private String[] cacheableResourcesSuffix = new String[]{
             ".js",
             ".png",
+            ".jpg",
             ".jpeg",
             ".font",
             ".css"
