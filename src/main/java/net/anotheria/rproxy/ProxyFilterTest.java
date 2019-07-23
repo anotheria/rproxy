@@ -190,6 +190,9 @@ public class ProxyFilterTest implements Filter {
     }
 
     private boolean hostExcluded(String host, String siteName) {
+        if(proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts() == null){
+            return false;
+        }
         for (String h : proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts()) {
             if (host.equals(h)) {
                 return true;
