@@ -121,5 +121,11 @@
             </plugin>
         </plugins>
     </build>
+   <scm>
+        <url>https://github.com/anotheria/rproxy</url>
+        <connection>scm:git:git@github.com:anotheria/rproxy.git</connection>
+        <developerConnection>scm:git:git@github.com:anotheria/rproxy.git</developerConnection>
+    </scm>
+
 
 </project>
