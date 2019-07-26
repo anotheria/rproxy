@@ -1,10 +1,11 @@
 package net.anotheria.rproxy.refactor;
 
-import net.anotheria.rproxy.refactor.cache.CachingPolicy;
+import java.util.Arrays;
+
 import org.configureme.annotations.ConfigureMe;
 import org.configureme.annotations.DontConfigure;
 
-import java.util.Arrays;
+import net.anotheria.rproxy.refactor.cache.CachingPolicy;
 
 /**
  * Site Configuration class.
@@ -46,10 +47,11 @@ public class SiteConfig {
             ".font",
             ".css"
     };
-
     private String[] excludedCecheableResourcesSuffix = new String[]{};
-
-    private String cacheableResourcesFsStoragePath = "/Users/dima/work/nazax/ano/storage";
+    private String cacheableResourcesFsStoragePath = "/tmp/cache";
+    private int resourceCacheTtlSeconds = 1800;
+    private int resourceCacheMaxSize = 100;
+    private int resourceCacheStartSize = 1000;
 
     @DontConfigure
     public static final String ALL = "*";
@@ -161,6 +163,30 @@ public class SiteConfig {
 
     public void setCacheableResourcesFsStoragePath(String cacheableResourcesFsStoragePath) {
         this.cacheableResourcesFsStoragePath = cacheableResourcesFsStoragePath;
+    }
+
+    public int getResourceCacheTtlSeconds() {
+        return resourceCacheTtlSeconds;
+    }
+
+    public void setResourceCacheTtlSeconds(int resourceCacheTtlSeconds) {
+        this.resourceCacheTtlSeconds = resourceCacheTtlSeconds;
+    }
+
+    public int getResourceCacheMaxSize() {
+        return resourceCacheMaxSize;
+    }
+
+    public void setResourceCacheMaxSize(int resourceCacheMaxSize) {
+        this.resourceCacheMaxSize = resourceCacheMaxSize;
+    }
+
+    public int getResourceCacheStartSize() {
+        return resourceCacheStartSize;
+    }
+
+    public void setResourceCacheStartSize(int resourceCacheStartSize) {
+        this.resourceCacheStartSize = resourceCacheStartSize;
     }
 }
 

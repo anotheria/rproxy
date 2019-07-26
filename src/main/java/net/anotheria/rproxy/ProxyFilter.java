@@ -33,6 +33,7 @@ import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
 import net.anotheria.rproxy.refactor.LocaleSpecialTarget;
 import net.anotheria.rproxy.refactor.RProxy;
+import net.anotheria.rproxy.refactor.RProxyFactory;
 import net.anotheria.rproxy.refactor.SiteConfig;
 import net.anotheria.rproxy.refactor.SiteHelper;
 import net.anotheria.rproxy.refactor.URLHelper;
@@ -42,14 +43,13 @@ import net.anotheria.rproxy.utils.URLUtils;
 @Monitor
 public class ProxyFilter implements Filter {
 
-    private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
+    private RProxy<String, HttpProxyResponse> proxy = RProxyFactory.getInstance();
     private Map<String, URLHelper> temp = new HashMap<>();
     private Map<String, String> sitenameLocaleSpecialTargetRule = new HashMap<>();
     private static final String W3TC_MINIFY = "w3tc_minify";
     private ResourceCacheManager cacheManager = ResourceCacheManager.getInstance();
 
     public void init(FilterConfig filterConfig) {
-
     }
 
 
@@ -96,7 +96,7 @@ public class ProxyFilter implements Filter {
                     return;
                 }
                 //if has spec rule
-                LocaleSpecialTarget currentLocaleSpecRule = hasSpecRule(siteName, locale);
+                LocaleSpecialTarget currentLocaleSpecRule = hasSpecRule(siteConfig, locale);
                 if (proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5) != null) {
                     HttpProxyResponse r = proxy.retrieveFromCache(siteName, fileExtension, requestURLMD5);
                     prepareHeadersForCaching(r, httpServletResponse);
@@ -172,8 +172,8 @@ public class ProxyFilter implements Filter {
             return fetchUrlContent(siteConfig, httpProxyRequest);
         }
 
-        ResourceCacheKey cacheKey = new ResourceCacheKey(siteName, resourceUrl);
-        CacheableResource cacheableResource = cacheManager.get(cacheKey);
+        ResourceCacheKey cacheKey = new ResourceCacheKey(resourceUrl);
+        CacheableResource cacheableResource = cacheManager.get(siteName, cacheKey);
         if (cacheableResource != null) {
             try {
                 HttpProxyResponse ret = map(cacheableResource);
@@ -182,7 +182,7 @@ public class ProxyFilter implements Filter {
                 ret.setData(content);
                 return ret;
             } catch (FileNotFoundException e) {
-                cacheManager.remove(cacheKey);
+                cacheManager.remove(siteName, cacheKey);
                 return fetchUrlContent(siteConfig, httpProxyRequest);
             }
         }
@@ -191,7 +191,7 @@ public class ProxyFilter implements Filter {
         String storagePath = saveContentToFS(siteConfig, resourceUrl, ret.getData());
         cacheableResource = map(ret);
         cacheableResource.setStoragePath(storagePath);
-        cacheManager.put(cacheKey, cacheableResource);
+        cacheManager.put(siteName, cacheKey, cacheableResource);
 
         return ret;
     }
@@ -274,8 +274,8 @@ public class ProxyFilter implements Filter {
         return "";
     }
 
-    private LocaleSpecialTarget hasSpecRule(String siteName, String locale) {
-        LocaleSpecialTarget[] rules = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getLocaleSpecialTargets();
+    private LocaleSpecialTarget hasSpecRule(SiteConfig siteConfig, String locale) {
+        LocaleSpecialTarget[] rules = siteConfig.getLocaleSpecialTargets();
         if(rules == null || rules.length == 0){
             return null;
         }

@@ -1,21 +1,16 @@
 package net.anotheria.rproxy.cache.resources.bean;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * @author
  */
-public class ResourceCacheKey {
+public class ResourceCacheKey implements Serializable {
     private String url;
-    private String siteName;
 
-    public ResourceCacheKey(String siteName, String url) {
-        this.siteName = siteName;
+    public ResourceCacheKey(String url) {
         this.url = url;
-    }
-
-    public String getSiteName() {
-        return siteName;
     }
 
     public String getUrl() {
@@ -30,12 +25,12 @@ public class ResourceCacheKey {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ResourceCacheKey that = (ResourceCacheKey) o;
-        return Objects.equals(url, that.url) && Objects.equals(siteName, that.siteName);
+        ResourceCacheKey cacheKey = (ResourceCacheKey) o;
+        return Objects.equals(url, cacheKey.url);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(url, siteName);
+        return Objects.hash(url);
     }
 }
