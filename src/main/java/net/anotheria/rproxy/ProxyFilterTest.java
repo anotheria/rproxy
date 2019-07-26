@@ -303,6 +303,9 @@ public class ProxyFilterTest implements Filter {
     }
 
     private boolean hostExcluded(String host, String siteName) {
+        if(proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts() == null){
+            return false;
+        }
         for (String h : proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts()) {
             if (host.equals(h)) {
                 return true;
@@ -313,6 +316,9 @@ public class ProxyFilterTest implements Filter {
     }
 
     private boolean sourceLocaleIsPermited(String siteName, String locale) {
+        if(proxy.getProxyConfig().getSiteConfigMap().get(siteName).getBaseLocales() == null){
+            return true;
+        }
         final String[] locales = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getBaseLocales();
         for (String loc : locales) {
             if (loc.equals(locale)) {

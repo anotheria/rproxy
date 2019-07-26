@@ -32,7 +32,7 @@ public interface ICacheStrategy<K, V> {
     /**
      * TODO remove method after testing
      * Get LinkedHashMap of Key, Value pairs stored in cache.
-     * @return LinkedHashMap<K, V> pairs
+     * @return LinkedHashMap&lt;K, V&gt; pairs
      */
     LinkedHashMap<K, V> getAllElements();
 
