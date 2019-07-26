@@ -2,6 +2,7 @@ package net.anotheria.rproxy.refactor;
 
 import net.anotheria.rproxy.refactor.cache.CachingPolicy;
 import org.configureme.annotations.ConfigureMe;
+import org.configureme.annotations.DontConfigure;
 
 import java.util.Arrays;
 
@@ -37,6 +38,21 @@ public class SiteConfig {
 
     private LocaleSpecialTarget[] localeSpecialTargets;
 
+    private String[] cacheableResourcesSuffix = new String[]{
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".font",
+            ".css"
+    };
+
+    private String[] excludedCecheableResourcesSuffix = new String[]{};
+
+    private String cacheableResourcesFsStoragePath = "/Users/dima/work/nazax/ano/storage";
+
+    @DontConfigure
+    public static final String ALL = "*";
 
     public String getAlias() {
         return alias;
@@ -121,6 +137,30 @@ public class SiteConfig {
 
     public void setLocaleSpecialTargets(LocaleSpecialTarget[] localeSpecialTargets) {
         this.localeSpecialTargets = localeSpecialTargets;
+    }
+
+    public String[] getCacheableResourcesSuffix() {
+        return cacheableResourcesSuffix;
+    }
+
+    public void setCacheableResourcesSuffix(String[] cacheableResourcesSuffix) {
+        this.cacheableResourcesSuffix = cacheableResourcesSuffix;
+    }
+
+    public String[] getExcludedCecheableResourcesSuffix() {
+        return excludedCecheableResourcesSuffix;
+    }
+
+    public void setExcludedCecheableResourcesSuffix(String[] excludedCecheableResourcesSuffix) {
+        this.excludedCecheableResourcesSuffix = excludedCecheableResourcesSuffix;
+    }
+
+    public String getCacheableResourcesFsStoragePath() {
+        return cacheableResourcesFsStoragePath;
+    }
+
+    public void setCacheableResourcesFsStoragePath(String cacheableResourcesFsStoragePath) {
+        this.cacheableResourcesFsStoragePath = cacheableResourcesFsStoragePath;
     }
 }
 

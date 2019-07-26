@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 
 import net.anotheria.moskito.aop.annotation.Monitor;
-import net.anotheria.rproxy.cache.resources.ResourceCacheConfig;
 import net.anotheria.rproxy.cache.resources.ResourceCacheManager;
 import net.anotheria.rproxy.cache.resources.bean.CacheableResource;
 import net.anotheria.rproxy.cache.resources.bean.ResourceCacheKey;
@@ -41,13 +40,12 @@ import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.utils.URLUtils;
 
 @Monitor
-public class ProxyFilterTest implements Filter {
+public class ProxyFilter implements Filter {
 
     private static RProxy<String, HttpProxyResponse> proxy = new RProxy<>();
     private Map<String, URLHelper> temp = new HashMap<>();
     private Map<String, String> sitenameLocaleSpecialTargetRule = new HashMap<>();
     private static final String W3TC_MINIFY = "w3tc_minify";
-    private ResourceCacheConfig config = new ResourceCacheConfig();
     private ResourceCacheManager cacheManager = ResourceCacheManager.getInstance();
 
     public void init(FilterConfig filterConfig) {
@@ -74,8 +72,9 @@ public class ProxyFilterTest implements Filter {
             String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
             String siteNameLocale = siteName + "." + locale;
+            SiteConfig siteConfig = getSiteConfig(siteName);
 
-            if (hostExcluded(host, siteName)) {
+            if (hostExcluded(siteConfig, host)) {
                 httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
@@ -91,7 +90,7 @@ public class ProxyFilterTest implements Filter {
 
             if (proxy.siteConfigurationPresent(siteName)) {
                 //if locale permitted
-                if (!sourceLocaleIsPermited(siteName, locale)) {
+                if (!sourceLocaleIsPermited(siteConfig, locale)) {
                     //locale restricted, throw 404
                     httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
                     return;
@@ -108,7 +107,7 @@ public class ProxyFilterTest implements Filter {
                 } else {
                     String targetPath;
                     if(currentLocaleSpecRule == null){
-                        targetPath = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getTargetPath();
+                        targetPath = siteConfig.getTargetPath();
                     }else {
                         targetPath = currentLocaleSpecRule.getCustomTarget();
                     }
@@ -143,7 +142,7 @@ public class ProxyFilterTest implements Filter {
 
                     prepareProxyRequestHeaders(httpProxyRequest, httpServletRequest, source, target);
 
-                    HttpProxyResponse httpProxyResponse = getUrlContent(requestURL, siteName, httpProxyRequest);
+                    HttpProxyResponse httpProxyResponse = getUrlContent(siteConfig, requestURL, siteName, httpProxyRequest);
 
                     if (httpProxyResponse != null) {
                         prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale, currentLocaleSpecRule);
@@ -161,16 +160,16 @@ public class ProxyFilterTest implements Filter {
         }
     }
 
-    private HttpProxyResponse fetchUrlContent(String siteName, HttpProxyRequest httpProxyRequest) throws IOException {
-        if (proxy.getProxyConfig().getSiteConfigMap().get(siteName).getSiteCredentials() != null) {
-            return HttpGetter.getUrlContent(httpProxyRequest, proxy.getProxyConfig().getSiteConfigMap().get(siteName).getSiteCredentials());
+    private HttpProxyResponse fetchUrlContent(SiteConfig siteConfig, HttpProxyRequest httpProxyRequest) throws IOException {
+        if (siteConfig.getSiteCredentials() != null) {
+            return HttpGetter.getUrlContent(httpProxyRequest, siteConfig.getSiteCredentials());
         }
         return HttpGetter.getUrlContent(httpProxyRequest);
     }
 
-    private HttpProxyResponse getUrlContent(String resourceUrl, String siteName, HttpProxyRequest httpProxyRequest) throws IOException {
-        if (!isCacheable(resourceUrl)) {
-            return fetchUrlContent(siteName, httpProxyRequest);
+    private HttpProxyResponse getUrlContent(SiteConfig siteConfig, String resourceUrl, String siteName, HttpProxyRequest httpProxyRequest) throws IOException {
+        if (!isCacheable(siteConfig, resourceUrl)) {
+            return fetchUrlContent(siteConfig, httpProxyRequest);
         }
 
         ResourceCacheKey cacheKey = new ResourceCacheKey(siteName, resourceUrl);
@@ -184,12 +183,12 @@ public class ProxyFilterTest implements Filter {
                 return ret;
             } catch (FileNotFoundException e) {
                 cacheManager.remove(cacheKey);
-                return fetchUrlContent(siteName, httpProxyRequest);
+                return fetchUrlContent(siteConfig, httpProxyRequest);
             }
         }
 
-        HttpProxyResponse ret = fetchUrlContent(siteName, httpProxyRequest);
-        String storagePath = saveContentToFS(resourceUrl, ret.getData());
+        HttpProxyResponse ret = fetchUrlContent(siteConfig, httpProxyRequest);
+        String storagePath = saveContentToFS(siteConfig, resourceUrl, ret.getData());
         cacheableResource = map(ret);
         cacheableResource.setStoragePath(storagePath);
         cacheManager.put(cacheKey, cacheableResource);
@@ -229,28 +228,32 @@ public class ProxyFilterTest implements Filter {
         return ret;
     }
 
-    private String saveContentToFS(String uri, byte[] body) throws IOException {
-        File file = new File(config.getFsStoragePath() + File.separator + new URL(uri).getFile());
+    private String saveContentToFS(SiteConfig siteConfig, String uri, byte[] body) throws IOException {
+        String storagePath = siteConfig.getCacheableResourcesFsStoragePath();
+        File file = new File(storagePath + File.separator + new URL(uri).getFile());
         FileUtils.writeByteArrayToFile(file, body);
 
         return file.getPath();
     }
 
-    private boolean isCacheable(String resourceUrl) {
+    private SiteConfig getSiteConfig(String siteName) {
+        return proxy.getProxyConfig().getSiteConfigMap().get(siteName);
+    }
+
+    private boolean isCacheable(SiteConfig siteConfig, String resourceUrl) {
         if (StringUtils.isBlank(resourceUrl)) {
             return false;
         }
 
         boolean ret = false;
-
-        for (String value : config.getExcludedResourcesSuffix()) {
-            if (value.equals(ResourceCacheConfig.ALL) || resourceUrl.endsWith(value)) {
+        for (String value : siteConfig.getExcludedCecheableResourcesSuffix()) {
+            if (value.equals(SiteConfig.ALL) || resourceUrl.endsWith(value)) {
                 return false;
             }
         }
 
-        for (String value : config.getCacheableResourcesSuffix()) {
-            if (value.equals(ResourceCacheConfig.ALL) || resourceUrl.endsWith(value)) {
+        for (String value : siteConfig.getCacheableResourcesSuffix()) {
+            if (value.equals(SiteConfig.ALL) || resourceUrl.endsWith(value)) {
                 ret = true;
                 break;
             }
@@ -302,11 +305,11 @@ public class ProxyFilterTest implements Filter {
         httpServletResponse.addHeader("Content-Encoding", "gzip");
     }
 
-    private boolean hostExcluded(String host, String siteName) {
-        if(proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts() == null){
+    private boolean hostExcluded(SiteConfig siteConfig, String host) {
+        if(siteConfig.getExcludeHosts() == null){
             return false;
         }
-        for (String h : proxy.getProxyConfig().getSiteConfigMap().get(siteName).getExcludeHosts()) {
+        for (String h : siteConfig.getExcludeHosts()) {
             if (host.equals(h)) {
                 return true;
             }
@@ -315,11 +318,11 @@ public class ProxyFilterTest implements Filter {
         return false;
     }
 
-    private boolean sourceLocaleIsPermited(String siteName, String locale) {
-        if(proxy.getProxyConfig().getSiteConfigMap().get(siteName).getBaseLocales() == null){
+    private boolean sourceLocaleIsPermited(SiteConfig siteConfig, String locale) {
+        if(siteConfig.getBaseLocales() == null){
             return true;
         }
-        final String[] locales = proxy.getProxyConfig().getSiteConfigMap().get(siteName).getBaseLocales();
+        final String[] locales = siteConfig.getBaseLocales();
         for (String loc : locales) {
             if (loc.equals(locale)) {
                 return true;
