@@ -10,7 +10,6 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -24,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.List;
 
 /**
  * TODO comment this class
@@ -72,27 +69,15 @@ public class HttpGetter {
     }
 
     public static HttpProxyResponse getURL(HttpProxyRequest req, UsernamePasswordCredentials cred) throws IOException {
-        System.out.println("Trying to get "+req);
         LOG.info(req.getUrl());
 
-        List<HttpProxyHeader> hreq = req.getHeaders();
-        for (HttpProxyHeader h : hreq) {
-            //System.out.println("Req..... " + h.getName() + " " + h.getValue());
-        }
         HttpResponse response = getHttpResponse(req, cred);
 
         Header[] headers = response.getAllHeaders();
-//        System.out.println("=================================");
-//        System.out.println("GETTER URL : " + req.getUrl());
-//        for (Header h : headers) {
-//            System.out.println("Response original " + h.getName() + " : " + h.getValue());
-//        }
-
 
         HttpProxyResponse ret = new HttpProxyResponse();
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
-        //ret.getContentType();
         /**
          * add response headers
          */
@@ -126,7 +111,6 @@ public class HttpGetter {
         }
         HttpClient client;
         if (credentials != null) {
-            //System.out.println("Using credentials : " + credentials.toString());
             CredentialsProvider provider = new BasicCredentialsProvider();
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
