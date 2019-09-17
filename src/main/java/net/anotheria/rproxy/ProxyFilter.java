@@ -384,9 +384,6 @@ public class ProxyFilter implements Filter {
         if(rule != null){
            path = rule.getCustomTarget();
         }
-        if(data.contains("bg-red")){
-            System.out.println("");
-        }
         data = data.replaceAll(path, temp.getLink());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
