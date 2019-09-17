@@ -1,29 +1,5 @@
 package net.anotheria.rproxy;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.zip.GZIPOutputStream;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-
 import net.anotheria.moskito.aop.annotation.Monitor;
 import net.anotheria.rproxy.cache.resources.ResourceCacheManager;
 import net.anotheria.rproxy.cache.resources.bean.CacheableResource;
@@ -39,6 +15,28 @@ import net.anotheria.rproxy.refactor.SiteHelper;
 import net.anotheria.rproxy.refactor.URLHelper;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.utils.URLUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 @Monitor
 public class ProxyFilter implements Filter {
@@ -79,7 +77,6 @@ public class ProxyFilter implements Filter {
                 return;
             }
 
-            System.out.println(requestURL);
             String originalPath = new java.net.URL(requestURL).getPath();
 
             String fileExtension = URLUtils.getFileExtensionFromPath(originalPath);
