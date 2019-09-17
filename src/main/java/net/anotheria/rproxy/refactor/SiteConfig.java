@@ -1,9 +1,11 @@
 package net.anotheria.rproxy.refactor;
 
-import net.anotheria.rproxy.refactor.cache.CachingPolicy;
-import org.configureme.annotations.ConfigureMe;
-
 import java.util.Arrays;
+
+import org.configureme.annotations.ConfigureMe;
+import org.configureme.annotations.DontConfigure;
+
+import net.anotheria.rproxy.refactor.cache.CachingPolicy;
 
 /**
  * Site Configuration class.
@@ -37,6 +39,22 @@ public class SiteConfig {
 
     private LocaleSpecialTarget[] localeSpecialTargets;
 
+    private String[] cacheableResourcesSuffix = new String[]{
+            ".js",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".font",
+            ".css"
+    };
+    private String[] excludedCecheableResourcesSuffix = new String[]{};
+    private String cacheableResourcesFsStoragePath = "/tmp/cache";
+    private int resourceCacheTtlSeconds = 1800;
+    private int resourceCacheMaxSize = 100;
+    private int resourceCacheStartSize = 1000;
+
+    @DontConfigure
+    public static final String ALL = "*";
 
     public String getAlias() {
         return alias;
@@ -121,6 +139,54 @@ public class SiteConfig {
 
     public void setLocaleSpecialTargets(LocaleSpecialTarget[] localeSpecialTargets) {
         this.localeSpecialTargets = localeSpecialTargets;
+    }
+
+    public String[] getCacheableResourcesSuffix() {
+        return cacheableResourcesSuffix;
+    }
+
+    public void setCacheableResourcesSuffix(String[] cacheableResourcesSuffix) {
+        this.cacheableResourcesSuffix = cacheableResourcesSuffix;
+    }
+
+    public String[] getExcludedCecheableResourcesSuffix() {
+        return excludedCecheableResourcesSuffix;
+    }
+
+    public void setExcludedCecheableResourcesSuffix(String[] excludedCecheableResourcesSuffix) {
+        this.excludedCecheableResourcesSuffix = excludedCecheableResourcesSuffix;
+    }
+
+    public String getCacheableResourcesFsStoragePath() {
+        return cacheableResourcesFsStoragePath;
+    }
+
+    public void setCacheableResourcesFsStoragePath(String cacheableResourcesFsStoragePath) {
+        this.cacheableResourcesFsStoragePath = cacheableResourcesFsStoragePath;
+    }
+
+    public int getResourceCacheTtlSeconds() {
+        return resourceCacheTtlSeconds;
+    }
+
+    public void setResourceCacheTtlSeconds(int resourceCacheTtlSeconds) {
+        this.resourceCacheTtlSeconds = resourceCacheTtlSeconds;
+    }
+
+    public int getResourceCacheMaxSize() {
+        return resourceCacheMaxSize;
+    }
+
+    public void setResourceCacheMaxSize(int resourceCacheMaxSize) {
+        this.resourceCacheMaxSize = resourceCacheMaxSize;
+    }
+
+    public int getResourceCacheStartSize() {
+        return resourceCacheStartSize;
+    }
+
+    public void setResourceCacheStartSize(int resourceCacheStartSize) {
+        this.resourceCacheStartSize = resourceCacheStartSize;
     }
 }
 
