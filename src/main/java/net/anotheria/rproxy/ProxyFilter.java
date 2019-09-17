@@ -179,8 +179,7 @@ public class ProxyFilter implements Filter {
                 ret.setData(content);
                 return ret;
             } catch (FileNotFoundException e) {
-                cacheManager.remove(siteName, cacheKey);
-                return fetchUrlContent(siteConfig, httpProxyRequest);
+                //ignored
             }
         }
 
