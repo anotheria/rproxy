@@ -2,20 +2,22 @@ package net.anotheria.rproxy.getter;
 
 import net.anotheria.rproxy.conf.Credentials;
 import net.anotheria.rproxy.refactor.SiteCredentials;
+import net.anotheria.rproxy.utils.IdleConnectionMonitorThread;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.*;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
 
 /**
  * TODO comment this class
@@ -36,22 +40,29 @@ public class HttpGetter {
     /**
      * HttpClient instance.
      */
-    private static AbstractHttpClient httpClient = null;
+    private static CloseableHttpClient httpClient = null;
+    private static HttpClientContext httpClientContext = null;
 
-    static {
-        SchemeRegistry schemeRegistry = new SchemeRegistry();
-        schemeRegistry.register(
-                new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
-        schemeRegistry.register(
-                new Scheme("https", 443, SSLSocketFactory.getSocketFactory()));
+    static{
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(3, TimeUnit.SECONDS);
+        ConnectionConfig connectionConfig = ConnectionConfig.custom().setCharset(Charset.forName("UTF-8")).build();
 
-        PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
-        // Increase max total connection to 200
-        cm.setMaxTotal(200);
-        // Increase default max connection per route to 20
-        cm.setDefaultMaxPerRoute(20);
+        connectionManager.setDefaultConnectionConfig(connectionConfig);
+        connectionManager.setMaxTotal(200);
+        connectionManager.setDefaultMaxPerRoute(20);
 
-        httpClient = new DefaultHttpClient(cm);
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(2000).setSocketTimeout(2000).setConnectionRequestTimeout(3000).build();
+        httpClient = HttpClients.custom()
+                .setDefaultRequestConfig(requestConfig)
+                .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
+                .setConnectionManager(connectionManager)
+                .build();
+
+        httpClientContext = HttpClientContext.create();
+        httpClientContext.setCredentialsProvider(new BasicCredentialsProvider());
+
+        IdleConnectionMonitorThread connectionMonitor = new IdleConnectionMonitorThread(connectionManager);
+        connectionMonitor.start();
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
@@ -71,16 +82,13 @@ public class HttpGetter {
     public static HttpProxyResponse getURL(HttpProxyRequest req, UsernamePasswordCredentials cred) throws IOException {
         LOG.info(req.getUrl());
 
-        HttpResponse response = getHttpResponse(req, cred);
+        CloseableHttpResponse response = getHttpResponse(req, cred);
 
         Header[] headers = response.getAllHeaders();
 
         HttpProxyResponse ret = new HttpProxyResponse();
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
-        /**
-         * add response headers
-         */
         ret.setHeaders(headers);
         final HttpEntity entity = response.getEntity();
 
@@ -94,32 +102,50 @@ public class HttpGetter {
                 entity.writeTo(out);//call this in any case!!!
                 ret.setData(out.toByteArray());
             } finally {
-                //ensure entity is closed.
-                EntityUtils.consume(entity);
+                try {
+                    //ensure entity is closed.
+                    EntityUtils.consume(entity);
+                } finally {
+                    response.close();
+                }
             }
         }
 
         return ret;
     }
 
-    public static HttpResponse getHttpResponse(HttpProxyRequest req, UsernamePasswordCredentials credentials) throws IOException {
+    public static CloseableHttpResponse getHttpResponse(HttpProxyRequest req, UsernamePasswordCredentials credentials) throws IOException {
         HttpGet request = new HttpGet(req.getUrl());
 
         for (HttpProxyHeader header : req.getHeaders()) {
             request.addHeader(header.getName(), header.getValue());
             //request.addHeader("accept", "image/*"); System.out.println(header.getName() + " ++++++ " + header.getValue());
         }
-        HttpClient client;
         if (credentials != null) {
-            CredentialsProvider provider = new BasicCredentialsProvider();
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
-            provider.setCredentials(authScope, credentials);
-            client = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).setDefaultCredentialsProvider(provider).build();
-        } else {
-            client = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build();
+
+            org.apache.http.auth.Credentials cached = httpClientContext.getCredentialsProvider().getCredentials(authScope);
+            if (!areSame(cached, credentials)) {
+                httpClientContext.getCredentialsProvider().setCredentials(authScope, credentials);
+            }
         }
 
-        return client.execute(request);
+        return httpClient.execute(request, httpClientContext);
+    }
+
+    /**
+     * Compare two instances of Credentials.
+     * @param c1 instance of Credentials
+     * @param c2 another instance of Credentials
+     * @return comparison result. {@code true} if both are null or contain same user/password pairs, false otherwise.
+     */
+    private static boolean areSame(org.apache.http.auth.Credentials c1, org.apache.http.auth.Credentials c2) {
+        if (c1 == null) {
+            return c2 == null;
+        } else {
+            return StringUtils.equals(c1.getUserPrincipal().getName(), c1.getUserPrincipal().getName()) &&
+                    StringUtils.equals(c1.getPassword(), c1.getPassword());
+        }
     }
 }
