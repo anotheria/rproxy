@@ -385,6 +385,8 @@ public class ProxyFilter implements Filter {
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
         data = data.replaceAll("data-alt=\"/", "data-alt=\"" + "/" + siteKey + "/");
+        data = data.replaceAll("value=\"/", "value=\"" + "/" + siteKey + "/");
+        data = data.replaceAll("action=\"/", "action=\"" + "/" + siteKey + "/");
         return data;
     }
 
