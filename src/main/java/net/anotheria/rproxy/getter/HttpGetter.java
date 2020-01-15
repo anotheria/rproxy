@@ -44,25 +44,29 @@ public class HttpGetter {
     private static HttpClientContext httpClientContext = null;
 
     static{
-        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(3, TimeUnit.SECONDS);
-        ConnectionConfig connectionConfig = ConnectionConfig.custom().setCharset(Charset.forName("UTF-8")).build();
+        try {
+            PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(3, TimeUnit.SECONDS);
+            ConnectionConfig connectionConfig = ConnectionConfig.custom().setCharset(Charset.forName("UTF-8")).build();
 
-        connectionManager.setDefaultConnectionConfig(connectionConfig);
-        connectionManager.setMaxTotal(200);
-        connectionManager.setDefaultMaxPerRoute(20);
+            connectionManager.setDefaultConnectionConfig(connectionConfig);
+            connectionManager.setMaxTotal(200);
+            connectionManager.setDefaultMaxPerRoute(20);
 
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(2000).setSocketTimeout(2000).setConnectionRequestTimeout(3000).build();
-        httpClient = HttpClients.custom()
-                .setDefaultRequestConfig(requestConfig)
-                .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
-                .setConnectionManager(connectionManager)
-                .build();
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(2000).setSocketTimeout(2000).setConnectionRequestTimeout(3000).build();
+            httpClient = HttpClients.custom()
+                    .setDefaultRequestConfig(requestConfig)
+                    .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
+                    .setConnectionManager(connectionManager)
+                    .build();
 
-        httpClientContext = HttpClientContext.create();
-        httpClientContext.setCredentialsProvider(new BasicCredentialsProvider());
+            httpClientContext = HttpClientContext.create();
+            httpClientContext.setCredentialsProvider(new BasicCredentialsProvider());
 
-        IdleConnectionMonitorThread connectionMonitor = new IdleConnectionMonitorThread(connectionManager);
-        connectionMonitor.start();
+            IdleConnectionMonitorThread connectionMonitor = new IdleConnectionMonitorThread(connectionManager);
+            connectionMonitor.start();
+        }catch (Exception any){
+            any.printStackTrace();
+        }
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
