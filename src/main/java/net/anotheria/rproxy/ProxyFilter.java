@@ -382,6 +382,8 @@ public class ProxyFilter implements Filter {
         }
         data = data.replaceAll(path, temp.getLink());
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
+        //same as for common href but without quotes
+        data = data.replaceAll("href=/", "href=" + "/" + siteKey + "/");
         data = AttrParser.addSubFolderToRelativePathesInSrcSets(data, "/" + siteKey);
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
         data = data.replaceAll("data-alt=\"/", "data-alt=\"" + "/" + siteKey + "/");
