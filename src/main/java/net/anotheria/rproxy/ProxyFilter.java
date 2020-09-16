@@ -388,7 +388,7 @@ public class ProxyFilter implements Filter {
         data = data.replaceAll("src=\"/", "src=\"" + "/" + siteKey + "/");
         //same as for common src but without quotes
         data = data.replaceAll("src=/", "src=" + "/" + siteKey + "/");
-        data = data.replaceAll("data-alt=\"/", "data-alt=\"" + "/" + siteKey + "/");
+        data = data.replaceAll("data-alt=", "data-alt=" + "/" + siteKey);
         data = data.replaceAll("value=\"/", "value=\"" + "/" + siteKey + "/");
         data = data.replaceAll("action=\"/", "action=\"" + "/" + siteKey + "/");
         return data;
