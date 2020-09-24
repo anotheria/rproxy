@@ -7,12 +7,7 @@ import net.anotheria.rproxy.cache.resources.bean.ResourceCacheKey;
 import net.anotheria.rproxy.getter.HttpGetter;
 import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
-import net.anotheria.rproxy.refactor.LocaleSpecialTarget;
-import net.anotheria.rproxy.refactor.RProxy;
-import net.anotheria.rproxy.refactor.RProxyFactory;
-import net.anotheria.rproxy.refactor.SiteConfig;
-import net.anotheria.rproxy.refactor.SiteHelper;
-import net.anotheria.rproxy.refactor.URLHelper;
+import net.anotheria.rproxy.refactor.*;
 import net.anotheria.rproxy.replacement.AttrParser;
 import net.anotheria.rproxy.utils.URLUtils;
 import org.apache.commons.io.FileUtils;
@@ -66,12 +61,17 @@ public class ProxyFilter implements Filter {
             String requestURL = httpServletRequest.getRequestURL().toString();
             String host = new java.net.URL(requestURL).getHost();
             String locale = URLUtils.getLocaleFromHost(host);
+
             //URL = requestURL;
             String requestURLMD5 = URLUtils.getMD5Hash(requestURL);
             String siteName = URLUtils.getTopPath(requestURL);
-            String siteNameLocale = siteName + "." + locale;
-            SiteConfig siteConfig = getSiteConfig(siteName);
 
+            SiteConfig siteConfig = getSiteConfig(siteName);
+            HostLocaleMapping mappedHost = getHostMappingPresent(siteConfig, host);
+            if(mappedHost != null){
+                locale = mappedHost.getLocale();
+            }
+            String siteNameLocale = siteName + "." + locale;
             if (hostExcluded(siteConfig, host)) {
                 httpServletResponse.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
@@ -142,7 +142,7 @@ public class ProxyFilter implements Filter {
                     HttpProxyResponse httpProxyResponse = getUrlContent(siteConfig, requestURL, siteName, httpProxyRequest);
 
                     if (httpProxyResponse != null) {
-                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale, currentLocaleSpecRule);
+                        prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale, currentLocaleSpecRule, mappedHost);
                         if (!fileExtension.equals("")) {
                             addGzipEncoding(httpServletResponse, httpProxyResponse);
                             prepareHeadersForCaching(httpProxyResponse, httpServletResponse);
@@ -155,6 +155,17 @@ public class ProxyFilter implements Filter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private HostLocaleMapping getHostMappingPresent(SiteConfig siteConfig, String host) {
+        if(siteConfig != null && siteConfig.getHostLocaleMapping() != null){
+            for(HostLocaleMapping mappedHost : siteConfig.getHostLocaleMapping()){
+                if(mappedHost.getHost() != null && mappedHost.getHost().equals(host)){
+                    return mappedHost;
+                }
+            }
+        }
+        return null;
     }
 
     private HttpProxyResponse fetchUrlContent(SiteConfig siteConfig, HttpProxyRequest httpProxyRequest) throws IOException {
@@ -341,14 +352,14 @@ public class ProxyFilter implements Filter {
         }
     }
 
-    private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale, LocaleSpecialTarget rule) {
+    private void prepareHttpServletResponseNew(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse, String key, String locale, LocaleSpecialTarget rule, HostLocaleMapping mapping) {
         /**
          * Ssl links in CSS files.
          */
         if (httpProxyResponse.isHtml() || httpProxyResponse.isCss()) {
             try {
                 String oldData = new String(httpProxyResponse.getData(), httpProxyResponse.getContentEncoding());
-                String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap().get(key), proxy.getProxyConfig().getSiteHelperMap().get(key), locale, rule);
+                String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap().get(key), proxy.getProxyConfig().getSiteHelperMap().get(key), locale, rule, mapping);
                 httpProxyResponse.setData(newData.getBytes());
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
@@ -374,13 +385,17 @@ public class ProxyFilter implements Filter {
         return targetPath;
     }
 
-    private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale, LocaleSpecialTarget rule) {
+    private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale, LocaleSpecialTarget rule, HostLocaleMapping mapping) {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
+        String sourceURL = temp.getLink();
         String path = siteConfig.getTargetPath();
         if(rule != null){
            path = rule.getCustomTarget();
         }
-        data = data.replaceAll(path, temp.getLink());
+        if(mapping != null && mapping.getHost() != null){
+            sourceURL = "https://" + mapping.getHost() + "/" + siteKey;
+        }
+        data = data.replaceAll(path, sourceURL);
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
         //same as for common href but without quotes
         data = data.replaceAll("href=/", "href=" + "/" + siteKey + "/");

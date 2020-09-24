@@ -39,6 +39,8 @@ public class SiteConfig {
 
     private LocaleSpecialTarget[] localeSpecialTargets;
 
+    private HostLocaleMapping[] hostLocaleMapping;
+
     private String[] cacheableResourcesSuffix = new String[]{
             ".js",
             ".png",
@@ -139,6 +141,14 @@ public class SiteConfig {
 
     public void setLocaleSpecialTargets(LocaleSpecialTarget[] localeSpecialTargets) {
         this.localeSpecialTargets = localeSpecialTargets;
+    }
+
+    public HostLocaleMapping[] getHostLocaleMapping() {
+        return hostLocaleMapping;
+    }
+
+    public void setHostLocaleMapping(HostLocaleMapping[] hostLocaleMapping) {
+        this.hostLocaleMapping = hostLocaleMapping;
     }
 
     public String[] getCacheableResourcesSuffix() {
