@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -388,7 +389,7 @@ public class ProxyFilter implements Filter {
     private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale, LocaleSpecialTarget rule, HostLocaleMapping mapping) {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
         String sourceURL = temp.getLink();
-        String path = siteConfig.getTargetPath();
+        String path = preparePath(siteConfig.getTargetPath());
         if(rule != null){
            path = rule.getCustomTarget();
         }
@@ -407,6 +408,16 @@ public class ProxyFilter implements Filter {
         data = data.replaceAll("value=\"/", "value=\"" + "/" + siteKey + "/");
         data = data.replaceAll("action=\"/", "action=\"" + "/" + siteKey + "/");
         return data;
+    }
+
+    private String preparePath(String targetPath) {
+        try {
+            URL pathUrl = new URL(targetPath);
+            return pathUrl.getProtocol() + "://" + pathUrl.getHost();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void prepareProxyRequestHeaders(HttpProxyRequest httpProxyRequest, HttpServletRequest httpServletRequest, URLHelper source, URLHelper target) {
