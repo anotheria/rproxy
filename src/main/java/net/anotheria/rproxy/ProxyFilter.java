@@ -111,6 +111,14 @@ public class ProxyFilter implements Filter {
                     }
                     String queryString = httpServletRequest.getQueryString();
                     String path = originalPath.replaceAll("/" + siteName, "");
+                    /**
+                     * In case we have path in configured target url, we need
+                     * to access resources without this path
+                     * (https://www.example.com/test/resource.png -> https://www.example.com/resource.png)
+                     */
+                    if(!fileExtension.equals("")){
+                        targetPath = URLUtils.removePathFromTarget(targetPath);
+                    }
                     targetPath = prepareTargetPath(targetPath, path, queryString);
                     HttpProxyRequest httpProxyRequest = new HttpProxyRequest(targetPath);
                     /**
@@ -389,7 +397,7 @@ public class ProxyFilter implements Filter {
     private String prepareProxyResponse(String data, String siteKey, SiteConfig siteConfig, SiteHelper siteHelper, String locale, LocaleSpecialTarget rule, HostLocaleMapping mapping) {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
         String sourceURL = temp.getLink();
-        String path = preparePath(siteConfig.getTargetPath());
+        String path = URLUtils.removePathFromTarget(siteConfig.getTargetPath());
         if(rule != null){
            path = rule.getCustomTarget();
         }
@@ -408,16 +416,6 @@ public class ProxyFilter implements Filter {
         data = data.replaceAll("value=\"/", "value=\"" + "/" + siteKey + "/");
         data = data.replaceAll("action=\"/", "action=\"" + "/" + siteKey + "/");
         return data;
-    }
-
-    private String preparePath(String targetPath) {
-        try {
-            URL pathUrl = new URL(targetPath);
-            return pathUrl.getProtocol() + "://" + pathUrl.getHost();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     private void prepareProxyRequestHeaders(HttpProxyRequest httpProxyRequest, HttpServletRequest httpServletRequest, URLHelper source, URLHelper target) {

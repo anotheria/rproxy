@@ -9,7 +9,15 @@ import java.security.NoSuchAlgorithmException;
  * This class contains useful methods for interaction with URLs.
  */
 public final class URLUtils {
-
+    public static String removePathFromTarget(String targetPath) {
+        try {
+            URL pathUrl = new URL(targetPath);
+            return pathUrl.getProtocol() + "://" + pathUrl.getHost();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     public static String getLocaleFromHost(String host) {
         String[] s = host.split("\\.");
         if (s.length == 0) {
