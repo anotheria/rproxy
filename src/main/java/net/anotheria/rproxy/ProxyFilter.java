@@ -405,6 +405,11 @@ public class ProxyFilter implements Filter {
             sourceURL = "https://" + mapping.getHost() + "/" + siteKey;
         }
         data = data.replaceAll(path, sourceURL);
+        if(path.startsWith("http:")){
+            data = data.replaceAll(path.replace("http:", "https:"), sourceURL);
+        }else {
+            data = data.replaceAll(path.replace("https:", "http:"), sourceURL);
+        }
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");
         //same as for common href but without quotes
         data = data.replaceAll("href=/", "href=" + "/" + siteKey + "/");
