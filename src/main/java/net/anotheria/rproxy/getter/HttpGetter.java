@@ -70,7 +70,12 @@ public class HttpGetter {
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
-        return getURL(req, null);
+        try{
+            return getURL(req, null);
+        }catch (Exception any){
+            LOG.error("Could not get URL content", any);
+            return null;
+        }
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req, SiteCredentials cred) throws IOException {
