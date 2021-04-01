@@ -5,7 +5,7 @@
     <!-- groupid net.anotheria artifact id: rproxy-->
     <groupId>net.anotheria</groupId>
     <artifactId>rproxy</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <!-- packaging jar by default -->
 
