@@ -204,10 +204,14 @@ public class ProxyFilter implements Filter {
         }
 
         HttpProxyResponse ret = fetchUrlContent(siteConfig, httpProxyRequest);
-        String storagePath = saveContentToFS(siteConfig, resourceUrl, ret.getData());
-        cacheableResource = map(ret);
-        cacheableResource.setStoragePath(storagePath);
-        cacheManager.put(siteName, cacheKey, cacheableResource);
+        try {
+            String storagePath = saveContentToFS(siteConfig, resourceUrl, ret.getData());
+            cacheableResource = map(ret);
+            cacheableResource.setStoragePath(storagePath);
+            cacheManager.put(siteName, cacheKey, cacheableResource);
+        }catch (NullPointerException e){
+            e.printStackTrace();
+        }
 
         return ret;
     }
