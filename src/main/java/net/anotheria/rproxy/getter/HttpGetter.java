@@ -41,7 +41,7 @@ public class HttpGetter {
      * HttpClient instance.
      */
     private static CloseableHttpClient httpClient = null;
-    private static HttpClientContext httpClientContext = null;
+    //private static HttpClientContext httpClientContext = null;
 
     static{
         try {
@@ -59,14 +59,17 @@ public class HttpGetter {
                     .setConnectionManager(connectionManager)
                     .build();
 
-            httpClientContext = HttpClientContext.create();
-            httpClientContext.setCredentialsProvider(new BasicCredentialsProvider());
-
             IdleConnectionMonitorThread connectionMonitor = new IdleConnectionMonitorThread(connectionManager);
             connectionMonitor.start();
         }catch (Exception any){
             any.printStackTrace();
         }
+    }
+
+    private static HttpClientContext getContextInstance(){
+        HttpClientContext httpClientContext = HttpClientContext.create();
+        httpClientContext.setCredentialsProvider(new BasicCredentialsProvider());
+        return httpClientContext;
     }
 
     public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
@@ -130,17 +133,18 @@ public class HttpGetter {
             request.addHeader(header.getName(), header.getValue());
             //request.addHeader("accept", "image/*"); System.out.println(header.getName() + " ++++++ " + header.getValue());
         }
+        HttpClientContext context = getContextInstance();
         if (credentials != null) {
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
 
-            org.apache.http.auth.Credentials cached = httpClientContext.getCredentialsProvider().getCredentials(authScope);
+            org.apache.http.auth.Credentials cached = context.getCredentialsProvider().getCredentials(authScope);
             if (!areSame(cached, credentials)) {
-                httpClientContext.getCredentialsProvider().setCredentials(authScope, credentials);
+                context.getCredentialsProvider().setCredentials(authScope, credentials);
             }
         }
 
-        return httpClient.execute(request, httpClientContext);
+        return httpClient.execute(request, context);
     }
 
     /**
