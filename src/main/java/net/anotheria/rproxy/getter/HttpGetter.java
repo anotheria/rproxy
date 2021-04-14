@@ -52,7 +52,7 @@ public class HttpGetter {
             connectionManager.setMaxTotal(200);
             connectionManager.setDefaultMaxPerRoute(20);
 
-            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(2000).setSocketTimeout(2000).setConnectionRequestTimeout(3000).build();
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5000).setSocketTimeout(5000).setConnectionRequestTimeout(5000).build();
             httpClient = HttpClients.custom()
                     .setDefaultRequestConfig(requestConfig)
                     .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
