@@ -6,9 +6,11 @@ import net.anotheria.rproxy.utils.IdleConnectionMonitorThread;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.GzipDecompressingEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -52,7 +54,7 @@ public class HttpGetter {
             connectionManager.setMaxTotal(200);
             connectionManager.setDefaultMaxPerRoute(20);
 
-            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5000).setSocketTimeout(5000).setConnectionRequestTimeout(5000).build();
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(2000).setSocketTimeout(2000).setConnectionRequestTimeout(2000).build();
             httpClient = HttpClients.custom()
                     .setDefaultRequestConfig(requestConfig)
                     .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
