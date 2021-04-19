@@ -54,6 +54,7 @@ public class SiteConfig {
     private int resourceCacheTtlSeconds = 1800;
     private int resourceCacheMaxSize = 100;
     private int resourceCacheStartSize = 1000;
+    private  int resourceRetryCount = 0;
 
     @DontConfigure
     public static final String ALL = "*";
@@ -197,6 +198,14 @@ public class SiteConfig {
 
     public void setResourceCacheStartSize(int resourceCacheStartSize) {
         this.resourceCacheStartSize = resourceCacheStartSize;
+    }
+
+    public int getResourceRetryCount() {
+        return resourceRetryCount;
+    }
+
+    public void setResourceRetryCount(int resourceRetryCount) {
+        this.resourceRetryCount = resourceRetryCount;
     }
 }
 

@@ -1,7 +1,6 @@
 package net.anotheria.rproxy.getter;
 
-import net.anotheria.rproxy.conf.Credentials;
-import net.anotheria.rproxy.refactor.SiteCredentials;
+import net.anotheria.rproxy.refactor.SiteConfig;
 import net.anotheria.rproxy.utils.IdleConnectionMonitorThread;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
@@ -24,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +43,7 @@ public class HttpGetter {
     private static CloseableHttpClient httpClient = null;
     //private static HttpClientContext httpClientContext = null;
 
-    static{
+    static {
         try {
             PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(3, TimeUnit.SECONDS);
             ConnectionConfig connectionConfig = ConnectionConfig.custom().setCharset(Charset.forName("UTF-8")).build();
@@ -61,44 +61,47 @@ public class HttpGetter {
 
             IdleConnectionMonitorThread connectionMonitor = new IdleConnectionMonitorThread(connectionManager);
             connectionMonitor.start();
-        }catch (Exception any){
+        } catch (Exception any) {
             any.printStackTrace();
         }
     }
 
-    private static HttpClientContext getContextInstance(){
+    private static HttpClientContext getContextInstance() {
         HttpClientContext httpClientContext = HttpClientContext.create();
         httpClientContext.setCredentialsProvider(new BasicCredentialsProvider());
         return httpClientContext;
     }
 
-    public static HttpProxyResponse getUrlContent(HttpProxyRequest req) throws IOException {
-        try{
-            return getURL(req, null);
-        }catch (Exception any){
-            LOG.error("Could not get URL content", any);
-            return null;
-        }
+    public static HttpProxyResponse getUrlContent(HttpProxyRequest req, SiteConfig config) throws IOException {
+        return getURL(req, config);
     }
 
-    public static HttpProxyResponse getUrlContent(HttpProxyRequest req, SiteCredentials cred) throws IOException {
-        UsernamePasswordCredentials c = new UsernamePasswordCredentials(cred.getUserName(), cred.getPassword());
-        return getURL(req, c);
-    }
-
-    public static HttpProxyResponse getUrlContent(HttpProxyRequest req, Credentials cred) throws IOException {
-        UsernamePasswordCredentials c = new UsernamePasswordCredentials(cred.getUserName(), cred.getPassword());
-        return getURL(req, c);
-    }
-
-    public static HttpProxyResponse getURL(HttpProxyRequest req, UsernamePasswordCredentials cred) throws IOException {
+    public static HttpProxyResponse getURL(HttpProxyRequest req, SiteConfig config) throws IOException {
         LOG.info(req.getUrl());
 
-        CloseableHttpResponse response = getHttpResponse(req, cred);
-
-        Header[] headers = response.getAllHeaders();
+        CloseableHttpResponse response = null;
+        int retryCount = 1, retryLimit = config.getResourceRetryCount();
+        UsernamePasswordCredentials credentials = null;
+        if(config.getSiteCredentials() != null){
+            credentials = new UsernamePasswordCredentials(config.getSiteCredentials().getUserName(), config.getSiteCredentials().getPassword());
+        }
+        do {
+            try {
+                response = getHttpResponse(req, credentials);
+            } catch (SocketTimeoutException timeout) {
+                LOG.error("Could not get URL content, try: " + retryCount + " / " + retryLimit, timeout);
+            }
+            retryCount++;
+        } while (response == null && retryCount <= retryLimit);
 
         HttpProxyResponse ret = new HttpProxyResponse();
+        if(response == null){
+            //Network read timeout error
+            ret.setStatusCode(500);
+            ret.setData(new byte[0]);
+            return ret;
+        }
+        Header[] headers = response.getAllHeaders();
         ret.setStatusCode(response.getStatusLine().getStatusCode());
         ret.setStatusMessage(response.getStatusLine().getReasonPhrase());
         ret.setHeaders(headers);
@@ -143,12 +146,12 @@ public class HttpGetter {
                 context.getCredentialsProvider().setCredentials(authScope, credentials);
             }
         }
-
         return httpClient.execute(request, context);
     }
 
     /**
      * Compare two instances of Credentials.
+     *
      * @param c1 instance of Credentials
      * @param c2 another instance of Credentials
      * @return comparison result. {@code true} if both are null or contain same user/password pairs, false otherwise.

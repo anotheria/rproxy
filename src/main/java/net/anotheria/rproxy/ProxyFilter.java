@@ -14,20 +14,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
+import java.io.*;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -69,7 +59,7 @@ public class ProxyFilter implements Filter {
 
             SiteConfig siteConfig = getSiteConfig(siteName);
             HostLocaleMapping mappedHost = getHostMappingPresent(siteConfig, host);
-            if(mappedHost != null){
+            if (mappedHost != null) {
                 locale = mappedHost.getLocale();
             }
             String siteNameLocale = siteName + "." + locale;
@@ -104,9 +94,9 @@ public class ProxyFilter implements Filter {
                     doServletResponse(httpServletResponse, r);
                 } else {
                     String targetPath;
-                    if(currentLocaleSpecRule == null){
+                    if (currentLocaleSpecRule == null) {
                         targetPath = siteConfig.getTargetPath();
-                    }else {
+                    } else {
                         targetPath = currentLocaleSpecRule.getCustomTarget();
                     }
                     String queryString = httpServletRequest.getQueryString();
@@ -116,7 +106,7 @@ public class ProxyFilter implements Filter {
                      * to access resources without this path
                      * (https://www.example.com/test/resource.png -> https://www.example.com/resource.png)
                      */
-                    if(!fileExtension.equals("")){
+                    if (!fileExtension.equals("")) {
                         targetPath = URLUtils.removePathFromTarget(targetPath);
                     }
                     targetPath = prepareTargetPath(targetPath, path, queryString);
@@ -130,17 +120,17 @@ public class ProxyFilter implements Filter {
 
                     if (temp.get(siteNameLocale) == null) {
                         source = new URLHelper(proxy.getProxyConfig().getSiteHelperMap().get(siteName).getSourceUrlHelper(), locale);
-                        if(currentLocaleSpecRule == null) {
+                        if (currentLocaleSpecRule == null) {
                             target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
-                        }else {
+                        } else {
                             target = new URLHelper(currentLocaleSpecRule.getCustomTarget());
                         }
                         temp.put(siteNameLocale, source);
                     } else {
                         source = temp.get(siteNameLocale);
-                        if(currentLocaleSpecRule != null){
+                        if (currentLocaleSpecRule != null) {
                             target = new URLHelper(targetPath);
-                        }else {
+                        } else {
                             target = proxy.getProxyConfig().getSiteHelperMap().get(siteName).getTargetUrlHelper();
                         }
                     }
@@ -150,7 +140,8 @@ public class ProxyFilter implements Filter {
 
                     HttpProxyResponse httpProxyResponse = getUrlContent(siteConfig, requestURL, siteName, httpProxyRequest);
 
-                    if (httpProxyResponse != null) {
+                    if (httpProxyResponse != null
+                            && httpProxyResponse.getStatusCode() != 500) {
                         prepareHttpServletResponseNew(httpServletResponse, httpProxyResponse, siteName, locale, currentLocaleSpecRule, mappedHost);
                         if (!fileExtension.equals("")) {
                             addGzipEncoding(httpServletResponse, httpProxyResponse);
@@ -167,9 +158,9 @@ public class ProxyFilter implements Filter {
     }
 
     private HostLocaleMapping getHostMappingPresent(SiteConfig siteConfig, String host) {
-        if(siteConfig != null && siteConfig.getHostLocaleMapping() != null){
-            for(HostLocaleMapping mappedHost : siteConfig.getHostLocaleMapping()){
-                if(mappedHost.getHost() != null && mappedHost.getHost().equals(host)){
+        if (siteConfig != null && siteConfig.getHostLocaleMapping() != null) {
+            for (HostLocaleMapping mappedHost : siteConfig.getHostLocaleMapping()) {
+                if (mappedHost.getHost() != null && mappedHost.getHost().equals(host)) {
                     return mappedHost;
                 }
             }
@@ -179,9 +170,9 @@ public class ProxyFilter implements Filter {
 
     private HttpProxyResponse fetchUrlContent(SiteConfig siteConfig, HttpProxyRequest httpProxyRequest) throws IOException {
         if (siteConfig.getSiteCredentials() != null) {
-            return HttpGetter.getUrlContent(httpProxyRequest, siteConfig.getSiteCredentials());
+            return HttpGetter.getUrlContent(httpProxyRequest, siteConfig);
         }
-        return HttpGetter.getUrlContent(httpProxyRequest);
+        return HttpGetter.getUrlContent(httpProxyRequest, siteConfig);
     }
 
     private HttpProxyResponse getUrlContent(SiteConfig siteConfig, String resourceUrl, String siteName, HttpProxyRequest httpProxyRequest) throws IOException {
@@ -209,7 +200,7 @@ public class ProxyFilter implements Filter {
             cacheableResource = map(ret);
             cacheableResource.setStoragePath(storagePath);
             cacheManager.put(siteName, cacheKey, cacheableResource);
-        }catch (NullPointerException e){
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
@@ -284,9 +275,9 @@ public class ProxyFilter implements Filter {
 
     private String probablyW3TotalCahcePluginHasMinifiedFile(HttpServletRequest httpServletRequest) {
         String value = httpServletRequest.getParameter(W3TC_MINIFY);
-        if(value != null){
+        if (value != null) {
             String[] values = value.split("\\.");
-            if(values.length > 0) {
+            if (values.length > 0) {
                 return "." + values[values.length - 1];
             }
         }
@@ -296,7 +287,7 @@ public class ProxyFilter implements Filter {
 
     private LocaleSpecialTarget hasSpecRule(SiteConfig siteConfig, String locale) {
         LocaleSpecialTarget[] rules = siteConfig.getLocaleSpecialTargets();
-        if(rules == null || rules.length == 0){
+        if (rules == null || rules.length == 0) {
             return null;
         }
         for (LocaleSpecialTarget rule : rules) {
@@ -316,7 +307,7 @@ public class ProxyFilter implements Filter {
             httpProxyResponse.setData(((ByteArrayOutputStream) outputStream).toByteArray());
             httpProxyResponse.setGzip(true);
             headerForGzip(httpServletResponse);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -326,7 +317,7 @@ public class ProxyFilter implements Filter {
     }
 
     private boolean hostExcluded(SiteConfig siteConfig, String host) {
-        if(siteConfig.getExcludeHosts() == null){
+        if (siteConfig.getExcludeHosts() == null) {
             return false;
         }
         for (String h : siteConfig.getExcludeHosts()) {
@@ -339,7 +330,7 @@ public class ProxyFilter implements Filter {
     }
 
     private boolean sourceLocaleIsPermited(SiteConfig siteConfig, String locale) {
-        if(siteConfig.getBaseLocales() == null){
+        if (siteConfig.getBaseLocales() == null) {
             return true;
         }
         final String[] locales = siteConfig.getBaseLocales();
@@ -385,7 +376,7 @@ public class ProxyFilter implements Filter {
             httpServletResponse.setContentType(httpProxyResponse.getContentType());
             httpServletResponse.getOutputStream().write(httpProxyResponse.getData());
             httpServletResponse.getOutputStream().flush();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -402,16 +393,16 @@ public class ProxyFilter implements Filter {
         URLHelper temp = new URLHelper(siteHelper.getSourceUrlHelper(), locale);
         String sourceURL = temp.getLink();
         String path = URLUtils.removePathFromTarget(siteConfig.getTargetPath());
-        if(rule != null){
-           path = rule.getCustomTarget();
+        if (rule != null) {
+            path = rule.getCustomTarget();
         }
-        if(mapping != null && mapping.getHost() != null){
+        if (mapping != null && mapping.getHost() != null) {
             sourceURL = "https://" + mapping.getHost() + "/" + siteKey;
         }
         data = data.replaceAll(path, sourceURL);
-        if(path.startsWith("http:")){
+        if (path.startsWith("http:")) {
             data = data.replaceAll(path.replace("http:", "https:"), sourceURL);
-        }else {
+        } else {
             data = data.replaceAll(path.replace("https:", "http:"), sourceURL);
         }
         data = data.replaceAll("href=\"/", "href=\"" + "/" + siteKey + "/");

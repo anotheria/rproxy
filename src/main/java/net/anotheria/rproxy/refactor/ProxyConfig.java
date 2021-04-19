@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * TODO singleton maybe?
  *
  * @param <K> type of Key for cache
  * @param <V> type of Value for cache
