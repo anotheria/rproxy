@@ -1,6 +1,6 @@
 package net.anotheria.rproxy.utils;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 public final class RewriteUtils {
 

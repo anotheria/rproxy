@@ -2,7 +2,7 @@ package net.anotheria.rproxy.getter;
 
 import net.anotheria.rproxy.refactor.SiteConfig;
 import net.anotheria.rproxy.utils.IdleConnectionMonitorThread;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.auth.AuthScope;
