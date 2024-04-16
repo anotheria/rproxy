@@ -3,10 +3,8 @@ package net.anotheria.rproxy.cache.web;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.*;
 
 import net.anotheria.moskito.core.predefined.CacheStats;
 import net.anotheria.rproxy.cache.resources.ResourceCacheManager;

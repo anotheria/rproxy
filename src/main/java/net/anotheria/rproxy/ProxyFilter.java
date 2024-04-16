@@ -1,5 +1,7 @@
 package net.anotheria.rproxy;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.anotheria.moskito.aop.annotation.Monitor;
 import net.anotheria.rproxy.cache.resources.ResourceCacheManager;
 import net.anotheria.rproxy.cache.resources.bean.CacheableResource;
@@ -9,20 +11,22 @@ import net.anotheria.rproxy.getter.HttpProxyRequest;
 import net.anotheria.rproxy.getter.HttpProxyResponse;
 import net.anotheria.rproxy.refactor.*;
 import net.anotheria.rproxy.replacement.AttrParser;
+import net.anotheria.rproxy.utils.RewriteUtils;
 import net.anotheria.rproxy.utils.URLUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.*;
+import org.brotli.dec.BrotliInputStream;
+
 import java.io.*;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.InflaterInputStream;
 
 @Monitor
 public class ProxyFilter implements Filter {
@@ -312,8 +316,25 @@ public class ProxyFilter implements Filter {
         }
     }
 
+//    private void addBrotliEncoding(HttpServletResponse httpServletResponse, HttpProxyResponse httpProxyResponse) {
+//        try {
+//            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//            BrotliOutputStream brotli = new BrotliOutputStream(outputStream);
+//            brotli.write(httpProxyResponse.getData());
+//            brotli.close();
+//            httpProxyResponse.setData(outputStream.toByteArray());
+//            //httpProxyResponse.setBrotli(true);
+//            headerForBrotli(httpServletResponse);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
     private void headerForGzip(HttpServletResponse httpServletResponse) {
         httpServletResponse.addHeader("Content-Encoding", "gzip");
+    }
+    private void headerForBrotli(HttpServletResponse httpServletResponse) {
+        httpServletResponse.addHeader("Content-Encoding", "br");
     }
 
     private boolean hostExcluded(SiteConfig siteConfig, String host) {
@@ -362,7 +383,18 @@ public class ProxyFilter implements Filter {
          */
         if (httpProxyResponse.isHtml() || httpProxyResponse.isCss()) {
             try {
-                String oldData = new String(httpProxyResponse.getData(), httpProxyResponse.getContentEncoding());
+                boolean isBrotli = false;
+                for(Header h : httpProxyResponse.getHeaders()){
+                    if(h.getName().equals("Content-Encoding") && h.getValue().equals("br")){
+                        isBrotli = true;
+                    }
+                }
+                byte[] dataArr = httpProxyResponse.getData();
+                if(isBrotli){
+                    dataArr = RewriteUtils.decompressBrotli(dataArr);
+                }
+
+                String oldData = new String(dataArr, httpProxyResponse.getContentEncoding());
                 String newData = prepareProxyResponse(oldData, key, proxy.getProxyConfig().getSiteConfigMap().get(key), proxy.getProxyConfig().getSiteHelperMap().get(key), locale, rule, mapping);
                 httpProxyResponse.setData(newData.getBytes());
             } catch (UnsupportedEncodingException e) {

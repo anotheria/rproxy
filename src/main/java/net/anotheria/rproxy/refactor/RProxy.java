@@ -1,10 +1,7 @@
 package net.anotheria.rproxy.refactor;
 
 import org.configureme.ConfigurationManager;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import jakarta.servlet.http.HttpServletResponse;
 
 public final class RProxy<K, V> {
 

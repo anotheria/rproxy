@@ -2,7 +2,8 @@ package net.anotheria.rproxy.getter;
 
 import net.anotheria.rproxy.refactor.SiteConfig;
 import net.anotheria.rproxy.utils.IdleConnectionMonitorThread;
-import org.apache.commons.lang.StringUtils;
+import net.anotheria.rproxy.utils.RewriteUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.auth.AuthScope;
@@ -115,7 +116,17 @@ public class HttpGetter {
             try {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 entity.writeTo(out);//call this in any case!!!
-                ret.setData(out.toByteArray());
+                boolean isBrotli = false;
+                for(Header h : headers){
+                    if(h.getName().equals("Content-Encoding") && h.getValue().equals("br")){
+                        isBrotli = true;
+                    }
+                }
+                byte[] dataArr = out.toByteArray();
+                if(isBrotli){
+                    dataArr = RewriteUtils.decompressBrotli(dataArr);
+                }
+                ret.setData(dataArr);
             } finally {
                 try {
                     //ensure entity is closed.
