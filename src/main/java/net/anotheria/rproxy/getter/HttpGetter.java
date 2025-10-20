@@ -6,17 +6,17 @@ import net.anotheria.rproxy.utils.RewriteUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.*;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -152,15 +152,11 @@ public class HttpGetter {
             URI uri = request.getURI();
             AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
 
-            CredentialsProvider credsProvider = context.getCredentialsProvider();
-            credsProvider.setCredentials(authScope, credentials);
-
-            BasicAuthCache authCache = new BasicAuthCache();
-            HttpHost targetHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-            authCache.put(targetHost, new BasicScheme());
-            context.setAuthCache(authCache);
+            org.apache.http.auth.Credentials cached = context.getCredentialsProvider().getCredentials(authScope);
+            if (!areSame(cached, credentials)) {
+                context.getCredentialsProvider().setCredentials(authScope, credentials);
+            }
         }
-
         return httpClient.execute(request, context);
     }
 
